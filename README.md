@@ -69,7 +69,7 @@ pnpm --filter @lobster-world/server dev
 ## Roadmap
 
 - [x] **Phase 0** — Technical architecture design
-- [ ] **Phase 0.5** — Weekend MVP (3D scene + mock lobsters + basic dialogue)
+- [x] **Phase 0.5** — Weekend MVP (3D scene + mock lobsters + basic dialogue)
 - [ ] **Phase 1** — Real OpenClaw integration (Social Proxy plugin)
 - [ ] **Phase 2** — Security hardening (E2E encryption, permission model)
 - [ ] **Phase 3** — Scale & polish (100+ lobsters, custom models, reputation)
