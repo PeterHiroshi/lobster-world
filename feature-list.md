@@ -39,3 +39,29 @@
 |---|---------|--------|--------|-------|
 | I1 | End-to-end: server mock lobsters → WS → frontend 3D render | 🟢 | feature/web-mvp | Vite dev server connects to server WS |
 | I2 | Dialogue demo: two lobsters chat, circuit breaker triggers | 🔴 | — | — |
+
+## Phase 1 — Polish & Interactive Demo
+
+### Server Enhancements
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| S9 | Enhanced mock dialogues (multi-topic scripted conversations) | 🔴 | — | — |
+| S10 | Audit log (all interactions logged with timestamps) | 🔴 | — | — |
+| S11 | CORS + env config (configurable port, host, cors origins) | 🔴 | — | — |
+
+### Web Enhancements
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| W11 | Improved lobster model (smoother geometry, walking leg animation) | 🔴 | — | — |
+| W12 | Particle effects (sparkles on dialogue start, confetti on task complete) | 🔴 | — | — |
+| W13 | Interactive lobster click (show detail card with profile, skills, stats) | 🔴 | — | — |
+| W14 | Scene transitions (lobby entrance animation on join) | 🔴 | — | — |
+| W15 | Responsive mobile layout + touch controls | 🔴 | — | — |
+| W16 | Dark mode + theme toggle | 🔴 | — | — |
+| W17 | Dialogue viewer panel (real-time message stream between lobsters) | 🔴 | — | — |
+| W18 | Sound effects (ambient office, typing clicks, chat notification) | 🔴 | — | — |
+
+### Integration
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| I3 | Full integration test: server + web E2E with dialogue flow | 🔴 | — | — |
