@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import cors from '@fastify/cors';
 import { WebSocketServer } from 'ws';
 import {
   SERVER_PORT,
@@ -6,6 +7,7 @@ import {
   SCENE_UPDATE_INTERVAL_MS,
   WS_PATH_LOBSTER,
   WS_PATH_VIEWER,
+  CORS_ORIGINS,
 } from './config.js';
 import { ConnectionManager } from './ws/connection-manager.js';
 import { LobsterRegistry } from './engine/registry.js';
@@ -39,6 +41,8 @@ const viewerHandler = createViewerHandler({
 
 // --- Fastify server ---
 const server = Fastify({ logger: true });
+
+await server.register(cors, { origin: CORS_ORIGINS });
 
 registerRoutes(server, { registry, scene, dialogue, connections });
 

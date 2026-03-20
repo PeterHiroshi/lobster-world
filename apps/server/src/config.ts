@@ -3,6 +3,9 @@ import {
   SCENE_UPDATE_INTERVAL_MS,
   HEARTBEAT_INTERVAL_MS,
   MAX_LOBSTERS_PER_SCENE,
+  AUDIT_RING_BUFFER_SIZE,
+  MOCK_DIALOGUE_INTERVAL_MIN_MS,
+  MOCK_DIALOGUE_INTERVAL_MAX_MS,
 } from '@lobster-world/protocol';
 
 // Re-export protocol constants for convenience
@@ -11,11 +14,23 @@ export {
   SCENE_UPDATE_INTERVAL_MS,
   HEARTBEAT_INTERVAL_MS,
   MAX_LOBSTERS_PER_SCENE,
+  AUDIT_RING_BUFFER_SIZE,
+  MOCK_DIALOGUE_INTERVAL_MIN_MS,
+  MOCK_DIALOGUE_INTERVAL_MAX_MS,
 };
 
 // Server-specific constants
 export const SERVER_PORT = Number(process.env.PORT) || 3001;
 export const SERVER_HOST = process.env.HOST || '0.0.0.0';
+
+// CORS configuration
+export function parseCorsOrigins(): string[] {
+  const raw = process.env.CORS_ORIGINS;
+  if (!raw) return ['http://localhost:5173'];
+  return raw.split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+export const CORS_ORIGINS = parseCorsOrigins();
 
 // WebSocket paths
 export const WS_PATH_LOBSTER = '/ws/lobster';
