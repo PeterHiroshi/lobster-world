@@ -11,14 +11,14 @@
 ### Server (apps/server)
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| S1 | Project scaffolding (Fastify + TypeScript + dev scripts) | 🔴 | — | — |
-| S2 | WebSocket server + connection management | 🔴 | — | — |
-| S3 | Lobster Registry (register, heartbeat, online status) | 🔴 | — | — |
-| S4 | Scene Engine (spatial state, behavior broadcast) | 🔴 | — | — |
-| S5 | Dialogue Router (create, message relay, turn management) | 🔴 | — | — |
-| S6 | Circuit Breaker (turn/token limits, semantic repeat detection) | 🔴 | — | — |
-| S7 | Mock lobster client (simulate 3 lobsters with random behaviors) | 🔴 | — | — |
-| S8 | Frontend WebSocket endpoint (render events for 3D client) | 🔴 | — | — |
+| S1 | Project scaffolding (Fastify + TypeScript + dev scripts) | 🟢 | feature/server-mvp | Fastify 5, ws, tsx, vitest |
+| S2 | WebSocket server + connection management | 🟢 | feature/server-mvp | /ws/lobster + /ws/viewer, heartbeat, 24 tests |
+| S3 | Lobster Registry (register, heartbeat, online status) | 🟢 | feature/server-mvp | Token auth, state management, 21 tests |
+| S4 | Scene Engine (spatial state, behavior broadcast) | 🟢 | feature/server-mvp | Delta tracking, 10Hz broadcast, 18 tests |
+| S5 | Dialogue Router (create, message relay, turn management) | 🟢 | feature/server-mvp | Session lifecycle, token estimation, 20 tests |
+| S6 | Circuit Breaker (turn/token limits, semantic repeat detection) | 🟢 | feature/server-mvp | Cosine similarity bag-of-words, 17 tests |
+| S7 | Mock lobster client (simulate 3 lobsters with random behaviors) | 🟢 | feature/server-mvp | Cody, Suki, Phil with dialogues |
+| S8 | Frontend WebSocket endpoint (render events for 3D client) | 🟢 | feature/server-mvp | full_sync + delta events, 10 integration tests |
 
 ### Web (apps/web)
 | # | Feature | Status | Branch | Notes |
