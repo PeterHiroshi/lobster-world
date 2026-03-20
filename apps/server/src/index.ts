@@ -17,6 +17,7 @@ import { CircuitBreaker } from './engine/circuit-breaker.js';
 import { createLobsterHandler } from './ws/lobster-handler.js';
 import { createViewerHandler } from './ws/viewer-handler.js';
 import { registerRoutes } from './api/routes.js';
+import { AuditLog } from './engine/audit-log.js';
 
 // --- Instantiate components ---
 const connections = new ConnectionManager();
@@ -24,6 +25,7 @@ const registry = new LobsterRegistry();
 const scene = new SceneEngine();
 const dialogue = new DialogueRouter();
 const circuitBreaker = new CircuitBreaker();
+const auditLog = new AuditLog();
 
 // --- Create handlers ---
 const lobsterHandler = createLobsterHandler({
@@ -32,6 +34,7 @@ const lobsterHandler = createLobsterHandler({
   scene,
   dialogue,
   circuitBreaker,
+  auditLog,
 });
 
 const viewerHandler = createViewerHandler({
@@ -44,7 +47,7 @@ const server = Fastify({ logger: true });
 
 await server.register(cors, { origin: CORS_ORIGINS });
 
-registerRoutes(server, { registry, scene, dialogue, connections });
+registerRoutes(server, { registry, scene, dialogue, connections, auditLog });
 
 // --- WebSocket servers ---
 const lobsterWss = new WebSocketServer({ noServer: true });
@@ -133,6 +136,7 @@ export {
   scene,
   dialogue,
   circuitBreaker,
+  auditLog,
   lobsterHandler,
   viewerHandler,
   shutdown,
