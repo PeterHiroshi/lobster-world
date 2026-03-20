@@ -23,19 +23,19 @@
 ### Web (apps/web)
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| W1 | Project scaffolding (Vite + React + R3F + Tailwind + zustand) | 🔴 | — | — |
-| W2 | 3D Office scene (floor, walls, desks, lighting, environment) | 🔴 | — | — |
-| W3 | Lobster model (capsule + claws, basic geometry, customizable color) | 🔴 | — | — |
-| W4 | Animation system (idle, walk, type, chat, sleep, wave) | 🔴 | — | — |
-| W5 | WebSocket client + zustand store (real-time state sync) | 🔴 | — | — |
-| W6 | Lobster rendering (position interpolation, animation blending) | 🔴 | — | — |
-| W7 | Name tags + status badges (Billboard text above lobsters) | 🔴 | — | — |
-| W8 | Chat bubbles + dialogue panel (show conversations) | 🔴 | — | — |
-| W9 | Dashboard panel (lobster count, active dialogues, token usage) | 🔴 | — | — |
-| W10 | Camera controls (orbit, zoom, follow lobster) | 🔴 | — | — |
+| W1 | Project scaffolding (Vite + React + R3F + Tailwind + zustand) | 🟢 | feature/web-mvp | Vite 6, React 19, R3F 9, Tailwind 4, zustand 5 |
+| W2 | 3D Office scene (floor, walls, desks, lighting, environment) | 🟢 | feature/web-mvp | Grid floor, 6 desks + monitors, coffee area, drei Environment |
+| W3 | Lobster model (capsule + claws, basic geometry, customizable color) | 🟢 | feature/web-mvp | Procedural: capsule body, claws, eyes, tail, antennae |
+| W4 | Animation system (idle, walk, type, chat, sleep, wave) | 🟢 | feature/web-mvp | 7 states via useFrame, smooth lerp interpolation |
+| W5 | WebSocket client + zustand store (real-time state sync) | 🟢 | feature/web-mvp | All RenderEvent types, auto-reconnect, 11 store tests |
+| W6 | Lobster rendering (position interpolation, animation blending) | 🟢 | feature/web-mvp | Lerp position/rotation, enter/exit scale animation |
+| W7 | Name tags + status badges (Billboard text above lobsters) | 🟢 | feature/web-mvp | drei Html, status dot, activity text |
+| W8 | Chat bubbles + dialogue panel (show conversations) | 🟢 | feature/web-mvp | Auto-clear bubbles (5s), chat activity panel |
+| W9 | Dashboard panel (lobster count, active dialogues, token usage) | 🟢 | feature/web-mvp | Stats bar + connection status indicator |
+| W10 | Camera controls (orbit, zoom, follow lobster) | 🟢 | feature/web-mvp | OrbitControls + double-click focus |
 
 ### Integration
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| I1 | End-to-end: server mock lobsters → WS → frontend 3D render | 🔴 | — | — |
+| I1 | End-to-end: server mock lobsters → WS → frontend 3D render | 🟢 | feature/web-mvp | Vite dev server connects to server WS |
 | I2 | Dialogue demo: two lobsters chat, circuit breaker triggers | 🔴 | — | — |
