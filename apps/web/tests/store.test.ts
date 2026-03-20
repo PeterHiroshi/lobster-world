@@ -36,6 +36,10 @@ describe('useWorldStore', () => {
       connectionStatus: 'disconnected',
       stats: { lobsterCount: 0, activeDialogues: 0, totalMessages: 0 },
       focusLobsterId: null,
+      selectedLobsterId: null,
+      lobsterStats: {},
+      activeDialogues: {},
+      effects: [],
     });
   });
 
@@ -158,5 +162,140 @@ describe('useWorldStore', () => {
 
     useWorldStore.getState().handleRenderEvent({ type: 'lobster_leave', lobsterId: 'lobster-1' });
     expect(useWorldStore.getState().focusLobsterId).toBeNull();
+  });
+
+  // --- Phase 1 tests ---
+
+  it('sets and clears selected lobster', () => {
+    useWorldStore.getState().setSelectedLobster('lobster-1');
+    expect(useWorldStore.getState().selectedLobsterId).toBe('lobster-1');
+
+    useWorldStore.getState().setSelectedLobster(null);
+    expect(useWorldStore.getState().selectedLobsterId).toBeNull();
+  });
+
+  it('clears selected lobster on leave', () => {
+    const lobster = makeLobster();
+    useWorldStore.setState({
+      lobsters: { 'lobster-1': lobster },
+      selectedLobsterId: 'lobster-1',
+      stats: { lobsterCount: 1, activeDialogues: 0, totalMessages: 0 },
+    });
+
+    useWorldStore.getState().handleRenderEvent({ type: 'lobster_leave', lobsterId: 'lobster-1' });
+    expect(useWorldStore.getState().selectedLobsterId).toBeNull();
+  });
+
+  it('handles dialogue_start event', () => {
+    const l1 = makeLobster({ id: 'l1' });
+    const l2 = makeLobster({ id: 'l2' });
+    useWorldStore.setState({ lobsters: { l1, l2 } });
+
+    const event: RenderEvent = {
+      type: 'dialogue_start',
+      sessionId: 'session-1',
+      participants: ['l1', 'l2'],
+      participantNames: ['Cody', 'Suki'],
+      participantColors: ['#ff0000', '#00ff00'],
+      intent: 'Code review',
+    };
+    useWorldStore.getState().handleRenderEvent(event);
+
+    const state = useWorldStore.getState();
+    expect(state.activeDialogues['session-1']).toBeDefined();
+    expect(state.activeDialogues['session-1'].intent).toBe('Code review');
+    expect(state.stats.activeDialogues).toBe(1);
+    expect(state.lobsterStats['l1']?.dialoguesParticipated).toBe(1);
+    expect(state.lobsterStats['l2']?.dialoguesParticipated).toBe(1);
+  });
+
+  it('handles dialogue_msg event', () => {
+    useWorldStore.setState({
+      activeDialogues: {
+        'session-1': {
+          sessionId: 'session-1',
+          participants: ['l1', 'l2'],
+          participantNames: ['Cody', 'Suki'],
+          participantColors: ['#ff0000', '#00ff00'],
+          intent: 'test',
+          messages: [],
+          ended: false,
+        },
+      },
+    });
+
+    const event: RenderEvent = {
+      type: 'dialogue_msg',
+      sessionId: 'session-1',
+      fromId: 'l1',
+      fromName: 'Cody',
+      fromColor: '#ff0000',
+      content: 'Hello!',
+      turnNumber: 1,
+    };
+    useWorldStore.getState().handleRenderEvent(event);
+
+    const state = useWorldStore.getState();
+    expect(state.activeDialogues['session-1'].messages).toHaveLength(1);
+    expect(state.activeDialogues['session-1'].messages[0].content).toBe('Hello!');
+    expect(state.lobsterStats['l1']?.messagesSent).toBe(1);
+  });
+
+  it('handles dialogue_end event', () => {
+    useWorldStore.setState({
+      activeDialogues: {
+        'session-1': {
+          sessionId: 'session-1',
+          participants: ['l1', 'l2'],
+          participantNames: ['Cody', 'Suki'],
+          participantColors: ['#ff0000', '#00ff00'],
+          intent: 'test',
+          messages: [],
+          ended: false,
+        },
+      },
+      stats: { lobsterCount: 2, activeDialogues: 1, totalMessages: 0 },
+    });
+
+    const event: RenderEvent = {
+      type: 'dialogue_end',
+      sessionId: 'session-1',
+      reason: 'completed',
+    };
+    useWorldStore.getState().handleRenderEvent(event);
+
+    const state = useWorldStore.getState();
+    expect(state.activeDialogues['session-1'].ended).toBe(true);
+    expect(state.activeDialogues['session-1'].endReason).toBe('completed');
+    expect(state.stats.activeDialogues).toBe(0);
+  });
+
+  it('adds confetti effect on lobster_join', () => {
+    const lobster = makeLobster({ id: 'lobster-new' });
+    useWorldStore.getState().handleRenderEvent({ type: 'lobster_join', lobster });
+
+    const state = useWorldStore.getState();
+    expect(state.effects.length).toBeGreaterThanOrEqual(1);
+    expect(state.effects[0].type).toBe('confetti');
+  });
+
+  it('adds sparkle effect on dialogue_start', () => {
+    const l1 = makeLobster({ id: 'l1', position: { x: 0, y: 0, z: 0 } });
+    const l2 = makeLobster({ id: 'l2', position: { x: 2, y: 0, z: 2 } });
+    useWorldStore.setState({ lobsters: { l1, l2 } });
+
+    useWorldStore.getState().handleRenderEvent({
+      type: 'dialogue_start',
+      sessionId: 's1',
+      participants: ['l1', 'l2'],
+      participantNames: ['Cody', 'Suki'],
+      participantColors: ['#ff0000', '#00ff00'],
+      intent: 'test',
+    });
+
+    const state = useWorldStore.getState();
+    const sparkle = state.effects.find((e) => e.type === 'sparkle');
+    expect(sparkle).toBeDefined();
+    expect(sparkle!.position.x).toBe(1); // midpoint
   });
 });

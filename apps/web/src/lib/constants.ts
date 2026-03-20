@@ -33,6 +33,18 @@ export const COFFEE_AREA_POSITION: [number, number] = [6, 0];
 
 // Lobster
 export const LOBSTER_SCALE = 0.5;
+export const LEG_PAIRS = 4;
+export const LEG_RADIUS = 0.012;
+export const LEG_LENGTH = 0.1;
+export const LEG_SPACING = 0.06;
+export const PUPIL_TRACK_FACTOR = 0.015;
+export const BODY_SEGMENTS_CAP = 16;
+export const BODY_SEGMENTS_RADIAL = 32;
+
+// Entrance animation
+export const ENTRANCE_POSITION: [number, number, number] = [0, 0, -10];
+export const ENTRANCE_WALK_SPEED = 0.03;
+
 
 // Status colors
 export const STATUS_COLORS: Record<string, string> = {
