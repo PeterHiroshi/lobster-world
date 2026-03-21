@@ -53,14 +53,19 @@ describe('useWorldStore', () => {
     expect(state.stats.lobsterCount).toBe(1);
   });
 
-  it('handles lobster_join', () => {
+  it('handles lobster_join with entrance animation', () => {
     const lobster = makeLobster({ id: 'lobster-2', profile: { id: 'lobster-2', name: 'Suki', color: '#4ecdc4', skills: [] } });
     const event: RenderEvent = { type: 'lobster_join', lobster };
     useWorldStore.getState().handleRenderEvent(event);
 
     const state = useWorldStore.getState();
-    expect(state.lobsters['lobster-2']).toEqual(lobster);
+    // Lobster starts at entrance position, not original
+    expect(state.lobsters['lobster-2'].position).toEqual({ x: 0, y: 0, z: -10 });
+    expect(state.lobsters['lobster-2'].animation).toBe('walking');
+    expect(state.lobsters['lobster-2'].profile.name).toBe('Suki');
     expect(state.stats.lobsterCount).toBe(1);
+    // Entrance animation target is original position
+    expect(state.entranceAnimations['lobster-2']).toBeDefined();
   });
 
   it('handles lobster_leave', () => {
@@ -270,13 +275,27 @@ describe('useWorldStore', () => {
     expect(state.stats.activeDialogues).toBe(0);
   });
 
-  it('adds confetti effect on lobster_join', () => {
-    const lobster = makeLobster({ id: 'lobster-new' });
+  it('adds confetti effect and entrance animation on lobster_join', () => {
+    const lobster = makeLobster({ id: 'lobster-new', position: { x: 3, y: 0, z: 2 } });
     useWorldStore.getState().handleRenderEvent({ type: 'lobster_join', lobster });
 
     const state = useWorldStore.getState();
     expect(state.effects.length).toBeGreaterThanOrEqual(1);
     expect(state.effects[0].type).toBe('confetti');
+
+    // Entrance animation: lobster starts at entrance, target is original position
+    expect(state.entranceAnimations['lobster-new']).toBeDefined();
+    expect(state.entranceAnimations['lobster-new'].targetPos).toEqual({ x: 3, y: 0, z: 2 });
+    // Lobster position should be at entrance
+    expect(state.lobsters['lobster-new'].position).toEqual({ x: 0, y: 0, z: -10 });
+  });
+
+  it('clearEntrance removes entrance animation', () => {
+    useWorldStore.setState({
+      entranceAnimations: { 'lobster-1': { targetPos: { x: 1, y: 0, z: 1 }, startTime: Date.now() } },
+    });
+    useWorldStore.getState().clearEntrance('lobster-1');
+    expect(useWorldStore.getState().entranceAnimations['lobster-1']).toBeUndefined();
   });
 
   it('adds sparkle effect on dialogue_start', () => {

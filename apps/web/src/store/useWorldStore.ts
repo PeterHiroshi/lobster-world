@@ -47,6 +47,11 @@ export interface EffectEntry {
   startTime: number;
 }
 
+export interface EntranceAnimation {
+  targetPos: Vec3;
+  startTime: number;
+}
+
 interface WorldState {
   lobsters: Record<string, LobsterState>;
   dialogues: DialogueSession[];
@@ -57,6 +62,7 @@ interface WorldState {
   lobsterStats: Record<string, LobsterStats>;
   activeDialogues: Record<string, ActiveDialogue>;
   effects: EffectEntry[];
+  entranceAnimations: Record<string, EntranceAnimation>;
 
   handleRenderEvent: (event: RenderEvent) => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
@@ -64,6 +70,7 @@ interface WorldState {
   setSelectedLobster: (id: string | null) => void;
   clearBubble: (lobsterId: string) => void;
   removeEffect: (id: string) => void;
+  clearEntrance: (lobsterId: string) => void;
 }
 
 let effectCounter = 0;
@@ -78,6 +85,7 @@ export const useWorldStore = create<WorldState>((set, get) => ({
   lobsterStats: {},
   activeDialogues: {},
   effects: [],
+  entranceAnimations: {},
 
   handleRenderEvent: (event: RenderEvent) => {
     switch (event.type) {
@@ -93,13 +101,22 @@ export const useWorldStore = create<WorldState>((set, get) => ({
         break;
       }
       case 'lobster_join': {
+        const entrancePos: Vec3 = { x: 0, y: 0, z: -10 };
+        const targetPos = event.lobster.position;
+
+        // Override initial position to entrance
+        const lobsterAtEntrance: LobsterState = {
+          ...event.lobster,
+          position: entrancePos,
+          animation: 'walking',
+        };
+
         set((state) => {
-          const lobsters = { ...state.lobsters, [event.lobster.id]: event.lobster };
-          // Add confetti effect at join position
+          const lobsters = { ...state.lobsters, [event.lobster.id]: lobsterAtEntrance };
           const effectId = `effect-${++effectCounter}`;
           const newEffect: EffectEntry = {
             id: effectId,
-            position: event.lobster.position,
+            position: entrancePos,
             type: 'confetti',
             startTime: Date.now(),
           };
@@ -107,9 +124,12 @@ export const useWorldStore = create<WorldState>((set, get) => ({
             lobsters,
             stats: { ...state.stats, lobsterCount: Object.keys(lobsters).length },
             effects: [...state.effects, newEffect],
+            entranceAnimations: {
+              ...state.entranceAnimations,
+              [event.lobster.id]: { targetPos, startTime: Date.now() },
+            },
           };
         });
-        // Auto-remove confetti after 3s
         const id = `effect-${effectCounter}`;
         setTimeout(() => get().removeEffect(id), 3000);
         break;
@@ -314,5 +334,13 @@ export const useWorldStore = create<WorldState>((set, get) => ({
     set((state) => ({
       effects: state.effects.filter((e) => e.id !== id),
     }));
+  },
+
+  clearEntrance: (lobsterId: string) => {
+    set((state) => {
+      const updated = { ...state.entranceAnimations };
+      delete updated[lobsterId];
+      return { entranceAnimations: updated };
+    });
   },
 }));

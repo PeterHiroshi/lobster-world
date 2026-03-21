@@ -19,6 +19,7 @@ import {
   PUPIL_TRACK_FACTOR,
   BODY_SEGMENTS_CAP,
   BODY_SEGMENTS_RADIAL,
+  ENTRANCE_WALK_SPEED,
 } from '../lib/constants';
 
 interface LobsterProps {
@@ -136,6 +137,8 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
   const setFocusLobster = useWorldStore((s) => s.setFocusLobster);
   const selectedLobsterId = useWorldStore((s) => s.selectedLobsterId);
   const setSelectedLobster = useWorldStore((s) => s.setSelectedLobster);
+  const entranceAnim = useWorldStore((s) => s.entranceAnimations[lobster.id]);
+  const clearEntrance = useWorldStore((s) => s.clearEntrance);
   const { camera } = useThree();
 
   const idOffset = useMemo(() => idHash(lobster.id), [lobster.id]);
@@ -151,12 +154,34 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
 
     const time = state.clock.elapsedTime;
 
-    // Smooth position interpolation
-    groupRef.current.position.x += (lobster.position.x - groupRef.current.position.x) * POSITION_LERP_FACTOR;
-    groupRef.current.position.z += (lobster.position.z - groupRef.current.position.z) * POSITION_LERP_FACTOR;
+    // Entrance walk animation — override position target
+    if (entranceAnim) {
+      const dx = entranceAnim.targetPos.x - groupRef.current.position.x;
+      const dz = entranceAnim.targetPos.z - groupRef.current.position.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+
+      if (dist < 0.2) {
+        // Arrived at desk
+        groupRef.current.position.x = entranceAnim.targetPos.x;
+        groupRef.current.position.z = entranceAnim.targetPos.z;
+        clearEntrance(lobster.id);
+      } else {
+        groupRef.current.position.x += dx * ENTRANCE_WALK_SPEED;
+        groupRef.current.position.z += dz * ENTRANCE_WALK_SPEED;
+      }
+    } else {
+      // Normal smooth position interpolation
+      groupRef.current.position.x += (lobster.position.x - groupRef.current.position.x) * POSITION_LERP_FACTOR;
+      groupRef.current.position.z += (lobster.position.z - groupRef.current.position.z) * POSITION_LERP_FACTOR;
+    }
 
     // Smooth rotation
-    const targetRotation = lobster.rotation;
+    const targetRotation = entranceAnim
+      ? Math.atan2(
+          entranceAnim.targetPos.x - groupRef.current.position.x,
+          entranceAnim.targetPos.z - groupRef.current.position.z,
+        )
+      : lobster.rotation;
     let diff = targetRotation - groupRef.current.rotation.y;
     if (diff > Math.PI) diff -= Math.PI * 2;
     if (diff < -Math.PI) diff += Math.PI * 2;
@@ -181,18 +206,19 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
       rightClawRef.current.position.set(0.22, 0, 0.15);
     }
 
-    // Apply animation
+    // Apply animation (force walking during entrance)
+    const effectiveAnimation = entranceAnim ? 'walking' as AnimationType : lobster.animation;
     animateLobster(
       bodyGroupRef.current,
       leftClawRef.current,
       rightClawRef.current,
-      lobster.animation,
+      effectiveAnimation,
       time,
       idOffset,
     );
 
     // Animate legs
-    animateLegs(legRefs, lobster.animation, time);
+    animateLegs(legRefs, effectiveAnimation, time);
 
     // Eye pupils track camera
     if (leftPupilRef.current && rightPupilRef.current && groupRef.current) {
