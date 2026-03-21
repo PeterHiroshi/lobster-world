@@ -7,6 +7,7 @@ import {
   SCENE_UPDATE_INTERVAL_MS,
   WS_PATH_LOBSTER,
   WS_PATH_VIEWER,
+  WS_PATH_SOCIAL,
   CORS_ORIGINS,
 } from './config.js';
 import { ConnectionManager } from './ws/connection-manager.js';
@@ -16,8 +17,13 @@ import { DialogueRouter } from './engine/dialogue.js';
 import { CircuitBreaker } from './engine/circuit-breaker.js';
 import { createLobsterHandler } from './ws/lobster-handler.js';
 import { createViewerHandler } from './ws/viewer-handler.js';
+import { createSocialLobbyHandler } from './ws/social-lobby-handler.js';
 import { registerRoutes } from './api/routes.js';
 import { AuditLog } from './engine/audit-log.js';
+import { AuthManager } from './engine/auth.js';
+import { LobbyManager } from './engine/lobby.js';
+import { ConsentManager } from './engine/consent.js';
+import { BudgetEnforcer } from './engine/budget-enforcer.js';
 import { WorkforceManager } from './engine/workforce.js';
 import { TaskEngine } from './engine/tasks.js';
 import { CommsEngine } from './engine/comms.js';
@@ -31,6 +37,10 @@ const scene = new SceneEngine();
 const dialogue = new DialogueRouter();
 const circuitBreaker = new CircuitBreaker();
 const auditLog = new AuditLog();
+const authManager = new AuthManager();
+const lobbyManager = new LobbyManager(scene.getScene());
+const consentManager = new ConsentManager();
+const budgetEnforcer = new BudgetEnforcer();
 const workforce = new WorkforceManager();
 const tasks = new TaskEngine();
 const comms = new CommsEngine();
@@ -51,6 +61,17 @@ const viewerHandler = createViewerHandler({
   scene,
 });
 
+const socialLobbyHandler = createSocialLobbyHandler({
+  auth: authManager,
+  lobby: lobbyManager,
+  consent: consentManager,
+  budgetEnforcer,
+  connections,
+  scene,
+  registry,
+  auditLog,
+});
+
 // --- Fastify server ---
 const server = Fastify({ logger: true });
 
@@ -61,6 +82,7 @@ registerRoutes(server, { registry, scene, dialogue, connections, auditLog, workf
 // --- WebSocket servers ---
 const lobsterWss = new WebSocketServer({ noServer: true });
 const viewerWss = new WebSocketServer({ noServer: true });
+const socialWss = new WebSocketServer({ noServer: true });
 
 lobsterWss.on('connection', (ws) => {
   lobsterHandler.handleConnection(ws);
@@ -68,6 +90,10 @@ lobsterWss.on('connection', (ws) => {
 
 viewerWss.on('connection', (ws) => {
   viewerHandler.handleConnection(ws);
+});
+
+socialWss.on('connection', (ws) => {
+  socialLobbyHandler.handleConnection(ws);
 });
 
 // --- Scene broadcast loop (10Hz) ---
@@ -107,6 +133,10 @@ async function start(): Promise<void> {
         viewerWss.handleUpgrade(request, socket, head, (ws) => {
           viewerWss.emit('connection', ws, request);
         });
+      } else if (pathname === WS_PATH_SOCIAL) {
+        socialWss.handleUpgrade(request, socket, head, (ws) => {
+          socialWss.emit('connection', ws, request);
+        });
       } else {
         socket.destroy();
       }
@@ -120,7 +150,7 @@ async function start(): Promise<void> {
     const teamRunner = startTeamScenario(serverUrl, workforce, tasks, comms, events, connections);
 
     server.log.info(`Server listening on ${SERVER_HOST}:${SERVER_PORT}`);
-    server.log.info(`WebSocket endpoints: ${WS_PATH_LOBSTER}, ${WS_PATH_VIEWER}`);
+    server.log.info(`WebSocket endpoints: ${WS_PATH_LOBSTER}, ${WS_PATH_VIEWER}, ${WS_PATH_SOCIAL}`);
     server.log.info('Team scenario started with 5 agents');
   } catch (err) {
     server.log.error(err);
@@ -135,6 +165,8 @@ async function shutdown(): Promise<void> {
   connections.stopHeartbeat();
   lobsterWss.close();
   viewerWss.close();
+  socialWss.close();
+  consentManager.dispose();
   await server.close();
 }
 
@@ -151,11 +183,16 @@ export {
   dialogue,
   circuitBreaker,
   auditLog,
+  authManager,
+  lobbyManager,
+  consentManager,
+  budgetEnforcer,
   workforce,
   tasks,
   comms,
   events,
   lobsterHandler,
   viewerHandler,
+  socialLobbyHandler,
   shutdown,
 };
