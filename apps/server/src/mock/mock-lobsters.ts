@@ -11,50 +11,28 @@ import type {
 import {
   MOCK_BEHAVIOR_MIN_INTERVAL_MS,
   MOCK_BEHAVIOR_MAX_INTERVAL_MS,
-  MOCK_DIALOGUE_MIN_TURNS,
-  MOCK_DIALOGUE_MAX_TURNS,
+  MOCK_DIALOGUE_INTERVAL_MIN_MS,
+  MOCK_DIALOGUE_INTERVAL_MAX_MS,
 } from '../config.js';
+import type { PersonalityType, DialogueScript, DialogueTurn } from './dialogues.js';
+import { DIALOGUE_SCRIPTS } from './dialogues.js';
 
-// --- Personality definitions ---
+// Re-export PersonalityType for tests
+export type { PersonalityType };
 
-type PersonalityType = 'coder' | 'social' | 'thinker';
+// --- Types ---
 
 interface WeightedChoice<T> {
   value: T;
   weight: number;
 }
 
-interface DialogueState {
+interface ScriptedDialogueState {
   sessionId: string;
   partnerId: string;
-  turnsRemaining: number;
+  script: DialogueScript;
+  currentTurnIndex: number;
 }
-
-// --- Scripted dialogue lines ---
-
-const SOCIAL_GREETINGS: readonly string[] = [
-  'Hey there! What are you working on?',
-  'Nice day in the office, right?',
-  'Want to grab some coffee?',
-];
-
-const CODER_RESPONSES: readonly string[] = [
-  'Just debugging a tricky race condition.',
-  'Yeah, almost done with this feature.',
-  'Sure, could use a break!',
-];
-
-const THINKER_RESPONSES: readonly string[] = [
-  'Contemplating the nature of distributed systems.',
-  'Indeed, the ambient lighting is quite pleasant.',
-  "Perhaps later, I'm in the middle of a thought.",
-];
-
-const SOCIAL_FOLLOWUPS: readonly string[] = [
-  'That sounds interesting! Tell me more.',
-  'I totally get that. Have you tried pair programming?',
-  'Cool! We should all sync up later.',
-];
 
 // --- Utility functions ---
 
@@ -72,17 +50,17 @@ function pickRandom<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function randomInterval(): number {
+function randomBehaviorInterval(): number {
   return (
     MOCK_BEHAVIOR_MIN_INTERVAL_MS +
     Math.random() * (MOCK_BEHAVIOR_MAX_INTERVAL_MS - MOCK_BEHAVIOR_MIN_INTERVAL_MS)
   );
 }
 
-function randomDialogueTurns(): number {
+function randomDialogueInterval(): number {
   return (
-    MOCK_DIALOGUE_MIN_TURNS +
-    Math.floor(Math.random() * (MOCK_DIALOGUE_MAX_TURNS - MOCK_DIALOGUE_MIN_TURNS + 1))
+    MOCK_DIALOGUE_INTERVAL_MIN_MS +
+    Math.random() * (MOCK_DIALOGUE_INTERVAL_MAX_MS - MOCK_DIALOGUE_INTERVAL_MIN_MS)
   );
 }
 
@@ -167,21 +145,39 @@ const ACTIVITY_STRINGS: Record<PersonalityType, Record<string, readonly string[]
   },
 };
 
+// Dialogue initiation weights per personality
+const DIALOGUE_INITIATION_CHANCE: Record<PersonalityType, number> = {
+  social: 0.4,
+  coder: 0.25,
+  thinker: 0.2,
+};
+
+// --- Shared client registry (for finding partners by personality) ---
+const clientRegistry = new Map<PersonalityType, MockLobsterClient>();
+
 // --- Mock Lobster Client ---
 
 export class MockLobsterClient {
   private ws: WebSocket | null = null;
   private behaviorTimer: ReturnType<typeof setTimeout> | null = null;
+  private dialogueTimer: ReturnType<typeof setTimeout> | null = null;
   private position: Vec3 = randomPosition();
-  private currentDialogue: DialogueState | null = null;
+  private currentDialogue: ScriptedDialogueState | null = null;
   private lobsterId: string | null = null;
   private knownLobsterIds: string[] = [];
+  private usedScriptIndices: Set<number> = new Set();
 
   constructor(
     private readonly profile: PublicProfile,
-    private readonly personality: PersonalityType,
+    readonly personality: PersonalityType,
     private readonly serverUrl: string,
-  ) {}
+  ) {
+    clientRegistry.set(personality, this);
+  }
+
+  getLobsterId(): string | null {
+    return this.lobsterId;
+  }
 
   connect(): void {
     const url = `${this.serverUrl}/ws/lobster`;
@@ -206,15 +202,18 @@ export class MockLobsterClient {
 
     this.ws.on('close', () => {
       this.stopBehaviorLoop();
+      this.stopDialogueLoop();
     });
   }
 
   disconnect(): void {
     this.stopBehaviorLoop();
+    this.stopDialogueLoop();
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
+    clientRegistry.delete(this.personality);
   }
 
   private sendUpstream(event: UpstreamEvent): void {
@@ -232,6 +231,7 @@ export class MockLobsterClient {
         );
         console.log(`[MockLobster:${this.profile.name}] Registered as ${this.lobsterId}`);
         this.startBehaviorLoop();
+        this.startDialogueLoop();
         break;
 
       case 'scene_state':
@@ -245,7 +245,7 @@ export class MockLobsterClient {
         break;
 
       case 'dialogue_message':
-        this.handleDialogueMessage(event.sessionId, event.turnNumber);
+        this.handleDialogueMessage(event.sessionId, event.content, event.turnNumber);
         break;
 
       case 'dialogue_ended':
@@ -257,24 +257,47 @@ export class MockLobsterClient {
       case 'budget_warning':
       case 'system_notice':
       case 'error':
-        // Log but take no action
         break;
     }
   }
 
   private handleDialogueInvite(sessionId: string, fromId: string): void {
-    // 80% chance to accept
-    if (Math.random() < 0.8) {
+    // Always accept scripted dialogues (high rate)
+    if (Math.random() < 0.9) {
       this.sendUpstream({ type: 'dialogue_accept', sessionId });
-      this.currentDialogue = {
-        sessionId,
-        partnerId: fromId,
-        turnsRemaining: randomDialogueTurns(),
-      };
-      // Send first response after a short delay
+
+      // If we don't have a scripted dialogue, set up to respond from script
+      if (!this.currentDialogue) {
+        // Find the script that the initiator is using (by looking for partner that matches us)
+        const partnerClient = [...clientRegistry.values()].find(
+          (c) => c.getLobsterId() === fromId,
+        );
+        const partnerScript = partnerClient?.currentDialogue?.script;
+
+        if (partnerScript) {
+          this.currentDialogue = {
+            sessionId,
+            partnerId: fromId,
+            script: partnerScript,
+            currentTurnIndex: 0,
+          };
+        } else {
+          // Fallback: pick a random script where we're the responder
+          const fallbackScripts = DIALOGUE_SCRIPTS.filter((s) => s.responder === this.personality);
+          const script = fallbackScripts.length > 0 ? pickRandom(fallbackScripts) : DIALOGUE_SCRIPTS[0];
+          this.currentDialogue = {
+            sessionId,
+            partnerId: fromId,
+            script,
+            currentTurnIndex: 0,
+          };
+        }
+      }
+
+      // Send first response after short delay
       setTimeout(() => {
-        this.sendDialogueResponse(sessionId);
-      }, 1000);
+        this.sendNextScriptedTurn(sessionId);
+      }, 1500 + Math.random() * 1000);
     } else {
       this.sendUpstream({
         type: 'dialogue_reject',
@@ -284,12 +307,32 @@ export class MockLobsterClient {
     }
   }
 
-  private handleDialogueMessage(sessionId: string, _turnNumber: number): void {
+  private handleDialogueMessage(sessionId: string, _content: string, _turnNumber: number): void {
     if (!this.currentDialogue || this.currentDialogue.sessionId !== sessionId) return;
 
-    this.currentDialogue.turnsRemaining--;
+    // Respond after a natural delay
+    setTimeout(() => {
+      this.sendNextScriptedTurn(sessionId);
+    }, 2000 + Math.random() * 2000);
+  }
 
-    if (this.currentDialogue.turnsRemaining <= 0) {
+  private sendNextScriptedTurn(sessionId: string): void {
+    if (!this.currentDialogue || this.currentDialogue.sessionId !== sessionId) return;
+
+    const { script, currentTurnIndex } = this.currentDialogue;
+
+    // Find next turn where we're the speaker
+    let nextIdx = currentTurnIndex;
+    while (nextIdx < script.turns.length) {
+      const turn: DialogueTurn = script.turns[nextIdx];
+      if (turn.speaker === this.personality) {
+        break;
+      }
+      nextIdx++;
+    }
+
+    if (nextIdx >= script.turns.length) {
+      // No more turns for us — end the dialogue
       this.sendUpstream({
         type: 'dialogue_end',
         sessionId,
@@ -299,37 +342,108 @@ export class MockLobsterClient {
       return;
     }
 
-    // Respond after a short delay to simulate thinking
-    setTimeout(() => {
-      this.sendDialogueResponse(sessionId);
-    }, 1500);
-  }
+    const turn: DialogueTurn = script.turns[nextIdx];
+    this.sendUpstream({
+      type: 'dialogue_message',
+      sessionId,
+      content: turn.content,
+    });
 
-  private sendDialogueResponse(sessionId: string): void {
-    if (!this.currentDialogue || this.currentDialogue.sessionId !== sessionId) return;
+    this.currentDialogue.currentTurnIndex = nextIdx + 1;
 
-    const lines = this.getResponseLines();
-    const content = pickRandom(lines);
-    this.sendUpstream({ type: 'dialogue_message', sessionId, content });
-  }
-
-  private getResponseLines(): readonly string[] {
-    switch (this.personality) {
-      case 'coder':
-        return CODER_RESPONSES;
-      case 'social':
-        return SOCIAL_FOLLOWUPS;
-      case 'thinker':
-        return THINKER_RESPONSES;
+    // If this was the last turn, end the dialogue
+    if (nextIdx + 1 >= script.turns.length) {
+      setTimeout(() => {
+        if (this.currentDialogue?.sessionId === sessionId) {
+          this.sendUpstream({
+            type: 'dialogue_end',
+            sessionId,
+            reason: 'conversation_complete',
+          });
+          this.currentDialogue = null;
+        }
+      }, 1000);
     }
+  }
+
+  private pickScript(): DialogueScript | undefined {
+    const available = DIALOGUE_SCRIPTS
+      .map((s, i) => ({ script: s, index: i }))
+      .filter(({ script, index }) =>
+        script.initiator === this.personality && !this.usedScriptIndices.has(index),
+      );
+
+    if (available.length === 0) {
+      // Reset and reuse
+      this.usedScriptIndices.clear();
+      return this.pickScript();
+    }
+
+    const choice = pickRandom(available);
+    this.usedScriptIndices.add(choice.index);
+    return choice.script;
+  }
+
+  private startDialogueLoop(): void {
+    const tick = (): void => {
+      this.tryInitiateDialogue();
+      this.dialogueTimer = setTimeout(tick, randomDialogueInterval());
+    };
+    // First dialogue after 10-20 seconds (let everyone connect)
+    this.dialogueTimer = setTimeout(tick, 10000 + Math.random() * 10000);
+  }
+
+  private stopDialogueLoop(): void {
+    if (this.dialogueTimer !== null) {
+      clearTimeout(this.dialogueTimer);
+      this.dialogueTimer = null;
+    }
+  }
+
+  private tryInitiateDialogue(): void {
+    if (this.currentDialogue !== null) return;
+    if (this.knownLobsterIds.length === 0) return;
+    if (Math.random() > DIALOGUE_INITIATION_CHANCE[this.personality]) return;
+
+    const script = this.pickScript();
+    if (!script) return;
+
+    // Find the partner for this script
+    const partnerClient = clientRegistry.get(script.responder);
+    const targetId = partnerClient?.getLobsterId();
+
+    if (!targetId || !this.knownLobsterIds.includes(targetId)) {
+      // Partner not available, pick any known lobster
+      const fallbackTargetId = pickRandom(this.knownLobsterIds);
+      this.initiateWithScript(fallbackTargetId, script);
+    } else {
+      this.initiateWithScript(targetId, script);
+    }
+  }
+
+  private initiateWithScript(targetId: string, script: DialogueScript): void {
+    const firstTurn = script.turns[0];
+    this.sendUpstream({
+      type: 'dialogue_request',
+      targetId,
+      intent: firstTurn.content,
+      dialogueType: script.topic.includes('Coffee') ? 'social' : 'collab',
+    });
+
+    this.currentDialogue = {
+      sessionId: '', // Set on invite/message receipt
+      partnerId: targetId,
+      script,
+      currentTurnIndex: 1, // First turn was the intent
+    };
   }
 
   private startBehaviorLoop(): void {
     const tick = (): void => {
       this.performBehavior();
-      this.behaviorTimer = setTimeout(tick, randomInterval());
+      this.behaviorTimer = setTimeout(tick, randomBehaviorInterval());
     };
-    this.behaviorTimer = setTimeout(tick, randomInterval());
+    this.behaviorTimer = setTimeout(tick, randomBehaviorInterval());
   }
 
   private stopBehaviorLoop(): void {
@@ -346,28 +460,29 @@ export class MockLobsterClient {
     const animation = pickWeighted(animationChoices);
     const mood = pickWeighted(moodChoices);
 
+    // Override animation if in dialogue
+    const effectiveAnimation = this.currentDialogue ? 'chatting' as AnimationType : animation;
+
     // Update position if walking
-    if (animation === 'walking') {
+    if (effectiveAnimation === 'walking') {
       const target = randomPosition();
       this.position = clampStep(this.position, target, 2);
     }
 
-    // Send state update
     this.sendUpstream({
       type: 'state_update',
       state: {
         position: this.position,
-        animation,
+        animation: effectiveAnimation,
         mood,
       },
     });
 
-    // Send activity update
     const activityMap = ACTIVITY_STRINGS[this.personality];
-    const activitiesForAnimation = activityMap[animation];
-    const activity = activitiesForAnimation
-      ? pickRandom(activitiesForAnimation)
-      : 'Hanging out';
+    const activitiesForAnimation = activityMap[effectiveAnimation];
+    const activity = this.currentDialogue
+      ? `Discussing: ${this.currentDialogue.script.topic}`
+      : (activitiesForAnimation ? pickRandom(activitiesForAnimation) : 'Hanging out');
 
     this.sendUpstream({
       type: 'activity_update',
@@ -375,38 +490,9 @@ export class MockLobsterClient {
       mood,
     });
 
-    // Emote on waving
-    if (animation === 'waving') {
+    if (effectiveAnimation === 'waving') {
       this.sendUpstream({ type: 'emote', emote: 'wave' as EmoteType });
     }
-
-    // Social lobster initiates dialogue 20% of the time
-    if (
-      this.personality === 'social' &&
-      this.currentDialogue === null &&
-      this.knownLobsterIds.length > 0 &&
-      Math.random() < 0.2
-    ) {
-      this.initiateDialogue();
-    }
-  }
-
-  private initiateDialogue(): void {
-    const targetId = pickRandom(this.knownLobsterIds);
-    const intent = pickRandom(SOCIAL_GREETINGS);
-
-    this.sendUpstream({
-      type: 'dialogue_request',
-      targetId,
-      intent,
-      dialogueType: 'social',
-    });
-
-    this.currentDialogue = {
-      sessionId: '', // Will be set when we receive the dialogue_invite/message
-      partnerId: targetId,
-      turnsRemaining: randomDialogueTurns(),
-    };
   }
 
   private getAnimationChoices(): WeightedChoice<AnimationType>[] {

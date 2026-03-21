@@ -1,29 +1,40 @@
-# Task Progress: lobster-web-mvp
-Created: 2026-03-20T18:53:59Z
+# Task Progress: lobster-phase1-polish
+Created: 2026-03-20T23:42:17Z
 
 ## Status: COMPLETE
 
 ## Completed
-- Project scaffolding (Vite 6 + React 19 + R3F 9 + Tailwind 4 + zustand 5)
-- Zustand world store (handles all RenderEvent types, 11 tests)
-- WebSocket hook with exponential backoff reconnect
-- 3D office scene (floor grid, 6 desks with monitors, coffee area, lighting)
-- Procedural lobster model (capsule body, claws, eyes, tail, antennae)
-- Animation system (7 states: idle, walking, working, chatting, sleeping, waving, thinking)
-- Position/rotation interpolation via useFrame lerp
-- Billboard labels (name, status dot, activity, chat bubbles with auto-clear)
-- Camera controller with double-click-to-focus
-- Stats panel, connection status indicator, chat activity panel
-- Component render tests (6 tests)
-- TypeScript strict mode — no errors
-- Vite dev server verified working
+### Server Enhancements
+- Enhanced mock dialogues with rich, multi-topic conversations
+- Audit log implementation (in-memory ring buffer, 1000 events)
+- CORS and environment configuration for server
+- New REST endpoint for audit events
+
+### Web Enhancements
+- Improved lobster 3D model (smoother body, added legs, better claws)
+- Particle effects (dialogue, join, ambient)
+- Interactive lobster click with detail card
+- Lobby entrance animation
+- Enhanced dialogue viewer panel
+- (Optional) Sound effects implementation
+
+### Integration
+- Full integration of server mock lobsters
+- Dialogues visible in 3D and panel
+- Circuit breaker demo
+- Audit log feeding into UI activity feed
 
 ## In Progress
 (none)
 
 ## Remaining
-(none — MVP complete)
+(none — Phase 1 polish complete)
 
 ## Session Log
-- 2026-03-20T18:53:59Z: Task started
-- 2026-03-20T19:00:00Z: Full web MVP implemented — 17 tests passing, Vite dev server working
+- 2026-03-20T23:42:17Z: Task started
+- 2026-03-21T00:08:49Z: Phase 1 polish implementation complete
+
+## Key Metrics
+- Enhancements across server and web components
+- Multiple new interactive features
+- Improved visual and interaction polish

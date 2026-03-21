@@ -9,6 +9,7 @@ import type { LobsterRegistry } from '../engine/registry.js';
 import type { SceneEngine } from '../engine/scene.js';
 import type { DialogueRouter } from '../engine/dialogue.js';
 import type { CircuitBreaker } from '../engine/circuit-breaker.js';
+import type { AuditLog } from '../engine/audit-log.js';
 
 export interface LobsterHandlerDeps {
   connections: ConnectionManager;
@@ -16,10 +17,11 @@ export interface LobsterHandlerDeps {
   scene: SceneEngine;
   dialogue: DialogueRouter;
   circuitBreaker: CircuitBreaker;
+  auditLog?: AuditLog;
 }
 
 export function createLobsterHandler(deps: LobsterHandlerDeps) {
-  const { connections, registry, scene, dialogue, circuitBreaker } = deps;
+  const { connections, registry, scene, dialogue, circuitBreaker, auditLog } = deps;
 
   const wsToLobsterId = new WeakMap<WebSocket, string>();
 
@@ -67,6 +69,8 @@ export function createLobsterHandler(deps: LobsterHandlerDeps) {
       type: 'lobster_join',
       lobster: state,
     });
+
+    auditLog?.log('lobster_join', [profile.id], `${profile.name} joined the scene`);
   }
 
   function handleStateUpdate(
@@ -156,6 +160,19 @@ export function createLobsterHandler(deps: LobsterHandlerDeps) {
       intent: event.intent,
       dialogueType: event.dialogueType,
     });
+
+    auditLog?.log('dialogue_start', [lobsterId, event.targetId], `Dialogue started: ${event.intent}`);
+
+    // Broadcast dialogue_start to viewers
+    const targetProfile = registry.getLobster(event.targetId)?.profile;
+    connections.broadcastToViewers({
+      type: 'dialogue_start',
+      sessionId: session.id,
+      participants: session.participants,
+      participantNames: [initiatorProfile.name, targetProfile?.name ?? 'Unknown'],
+      participantColors: [initiatorProfile.color, targetProfile?.color ?? '#888888'],
+      intent: event.intent,
+    });
   }
 
   function handleDialogueAccept(
@@ -221,6 +238,12 @@ export function createLobsterHandler(deps: LobsterHandlerDeps) {
             stats,
           });
         }
+        auditLog?.log('circuit_breaker_triggered', session.participants, `Session killed: ${sessionCheck.reason}`);
+        connections.broadcastToViewers({
+          type: 'dialogue_end',
+          sessionId: event.sessionId,
+          reason: sessionCheck.reason ?? 'circuit_breaker',
+        });
       }
       return;
     }
@@ -238,6 +261,12 @@ export function createLobsterHandler(deps: LobsterHandlerDeps) {
             stats,
           });
         }
+        auditLog?.log('circuit_breaker_triggered', session.participants, `Repeat detected: ${messageCheck.reason}`);
+        connections.broadcastToViewers({
+          type: 'dialogue_end',
+          sessionId: event.sessionId,
+          reason: messageCheck.reason ?? 'circuit_breaker',
+        });
       }
       return;
     }
@@ -263,6 +292,20 @@ export function createLobsterHandler(deps: LobsterHandlerDeps) {
       lobsterIds: session.participants,
       preview: event.content.slice(0, 50),
     });
+
+    // Broadcast dialogue_msg to viewers
+    const senderProfile = registry.getLobster(lobsterId)?.profile;
+    connections.broadcastToViewers({
+      type: 'dialogue_msg',
+      sessionId: event.sessionId,
+      fromId: lobsterId,
+      fromName: senderProfile?.name ?? 'Unknown',
+      fromColor: senderProfile?.color ?? '#888888',
+      content: event.content,
+      turnNumber: message.turnNumber,
+    });
+
+    auditLog?.log('dialogue_message', [lobsterId], `Turn ${message.turnNumber}: ${event.content.slice(0, 80)}`);
   }
 
   function handleDialogueEnd(
@@ -288,6 +331,14 @@ export function createLobsterHandler(deps: LobsterHandlerDeps) {
         stats,
       });
     }
+
+    auditLog?.log('dialogue_end', session.participants, `Dialogue ended: ${event.reason}`);
+
+    connections.broadcastToViewers({
+      type: 'dialogue_end',
+      sessionId: event.sessionId,
+      reason: event.reason,
+    });
   }
 
   function handleEmote(
@@ -317,6 +368,9 @@ export function createLobsterHandler(deps: LobsterHandlerDeps) {
 
   // Register disconnect handler
   connections.onLobsterDisconnect((lobsterId: string) => {
+    const lobster = registry.getLobster(lobsterId);
+    auditLog?.log('lobster_leave', [lobsterId], `${lobster?.profile.name ?? lobsterId} left the scene`);
+
     registry.setStatus(lobsterId, 'offline');
     scene.removeLobster(lobsterId);
 

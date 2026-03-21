@@ -13,6 +13,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
     "@lobster-world/protocol": "workspace:*",
     "fastify": "^5.3.3",
     "ws": "^8.18.1"

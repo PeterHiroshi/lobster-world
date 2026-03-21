@@ -112,6 +112,23 @@ export interface SessionStats {
   endReason: 'completed' | 'budget_exceeded' | 'circuit_breaker' | 'user_ended' | 'timeout';
 }
 
+// --- Audit Types ---
+
+export type AuditEventType =
+  | 'lobster_join'
+  | 'lobster_leave'
+  | 'dialogue_start'
+  | 'dialogue_message'
+  | 'dialogue_end'
+  | 'circuit_breaker_triggered';
+
+export interface AuditEvent {
+  timestamp: number;
+  eventType: AuditEventType;
+  participants: string[];
+  details: string;
+}
+
 // --- Protocol Events ---
 
 // Upstream: Lobster (Social Proxy) → Platform
@@ -145,6 +162,9 @@ export type RenderEvent =
   | { type: 'lobster_leave'; lobsterId: string }
   | { type: 'lobster_update'; lobsterId: string; delta: Partial<LobsterState> }
   | { type: 'dialogue_bubble'; lobsterIds: string[]; preview?: string }
+  | { type: 'dialogue_start'; sessionId: string; participants: string[]; participantNames: string[]; participantColors: string[]; intent: string }
+  | { type: 'dialogue_msg'; sessionId: string; fromId: string; fromName: string; fromColor: string; content: string; turnNumber: number }
+  | { type: 'dialogue_end'; sessionId: string; reason: string }
   | { type: 'effect'; position: Vec3; effectType: string };
 
 // --- Safety / Budget Types ---
@@ -211,3 +231,6 @@ export const DEFAULT_BUDGET: BudgetPolicy = {
 export const SCENE_UPDATE_INTERVAL_MS = 100;
 export const HEARTBEAT_INTERVAL_MS = 30000;
 export const MAX_LOBSTERS_PER_SCENE = 50;
+export const AUDIT_RING_BUFFER_SIZE = 1000;
+export const MOCK_DIALOGUE_INTERVAL_MIN_MS = 30000;
+export const MOCK_DIALOGUE_INTERVAL_MAX_MS = 60000;
