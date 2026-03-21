@@ -38,30 +38,30 @@
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
 | I1 | End-to-end: server mock lobsters → WS → frontend 3D render | 🟢 | feature/web-mvp | Vite dev server connects to server WS |
-| I2 | Dialogue demo: two lobsters chat, circuit breaker triggers | 🔴 | — | — |
+| I2 | Dialogue demo: two lobsters chat, circuit breaker triggers | 🟢 | feature/phase1-polish | Scripted dialogues + "Broken Record" demo |
 
 ## Phase 1 — Polish & Interactive Demo
 
 ### Server Enhancements
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| S9 | Enhanced mock dialogues (multi-topic scripted conversations) | 🔴 | — | — |
-| S10 | Audit log (all interactions logged with timestamps) | 🔴 | — | — |
-| S11 | CORS + env config (configurable port, host, cors origins) | 🔴 | — | — |
+| S9 | Enhanced mock dialogues (multi-topic scripted conversations) | 🟢 | feature/phase1-polish | 9 scripts: code review, architecture, coffee, bug hunt + circuit breaker demo |
+| S10 | Audit log (all interactions logged with timestamps) | 🟢 | feature/phase1-polish | Ring buffer (1000 events), GET /api/audit, 9 tests |
+| S11 | CORS + env config (configurable port, host, cors origins) | 🟢 | feature/phase1-polish | @fastify/cors, CORS_ORIGINS env var, 5 tests |
 
 ### Web Enhancements
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| W11 | Improved lobster model (smoother geometry, walking leg animation) | 🔴 | — | — |
-| W12 | Particle effects (sparkles on dialogue start, confetti on task complete) | 🔴 | — | — |
-| W13 | Interactive lobster click (show detail card with profile, skills, stats) | 🔴 | — | — |
-| W14 | Scene transitions (lobby entrance animation on join) | 🔴 | — | — |
+| W11 | Improved lobster model (smoother geometry, walking leg animation) | 🟢 | feature/phase1-polish | 16x32 capsule, 4 leg pairs, pincer claws, eye tracking, idle variation |
+| W12 | Particle effects (sparkles on dialogue start, confetti on join) | 🟢 | feature/phase1-polish | Confetti (20 pieces), sparkles (drei), ambient dust |
+| W13 | Interactive lobster click (show detail card with profile, skills, stats) | 🟢 | feature/phase1-polish | Detail card via drei Html, glow ring, click-outside dismiss |
+| W14 | Scene transitions (lobby entrance animation on join) | 🟢 | feature/phase1-polish | Walk from entrance to desk, scale-up, confetti burst |
 | W15 | Responsive mobile layout + touch controls | 🔴 | — | — |
 | W16 | Dark mode + theme toggle | 🔴 | — | — |
-| W17 | Dialogue viewer panel (real-time message stream between lobsters) | 🔴 | — | — |
-| W18 | Sound effects (ambient office, typing clicks, chat notification) | 🔴 | — | — |
+| W17 | Dialogue viewer panel (real-time message stream between lobsters) | 🟢 | feature/phase1-polish | Expandable cards, typing indicator, colored speakers, auto-scroll |
+| W18 | Sound effects (ambient office, typing clicks, chat notification) | 🟢 | feature/phase1-polish | Web Audio API, procedural sounds, mute toggle |
 
 ### Integration
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| I3 | Full integration test: server + web E2E with dialogue flow | 🔴 | — | — |
+| I3 | Full integration: server + web E2E with dialogue flow | 🟢 | feature/phase1-polish | Activity feed, dialogue connections, circuit breaker visible |

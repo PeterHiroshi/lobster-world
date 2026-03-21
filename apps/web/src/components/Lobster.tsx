@@ -102,7 +102,7 @@ function animateLobster(
 }
 
 function animateLegs(
-  legRefs: React.RefObject<Group>[],
+  legRefs: { current: Group | null }[],
   animation: AnimationType,
   time: number,
 ) {
