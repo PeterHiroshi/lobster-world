@@ -9,6 +9,7 @@ import { BudgetBar } from './panels/BudgetBar';
 import { SoundToggle } from './components/SoundToggle';
 import { LobbyScreen } from './components/LobbyScreen';
 import { PermissionRequestOverlay } from './components/PermissionRequestOverlay';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const Scene = lazy(() => import('./components/Scene').then((m) => ({ default: m.Scene })));
 import { useWebSocket } from './hooks/useWebSocket';
@@ -78,9 +79,11 @@ export function App() {
 
   return (
     <div className="relative w-full h-full">
-      <Suspense fallback={<div className="flex items-center justify-center w-full h-full text-gray-400">Loading 3D scene...</div>}>
-        <Scene />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<div className="flex items-center justify-center w-full h-full text-gray-400">Loading 3D scene...</div>}>
+          <Scene />
+        </Suspense>
+      </ErrorBoundary>
       <StatsPanel />
       <ChatPanel />
       <ConnectionStatus />
