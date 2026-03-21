@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { Scene } from './components/Scene';
 import { StatsPanel } from './panels/StatsPanel';
 import { ChatPanel } from './panels/ChatPanel';
@@ -13,6 +13,7 @@ import { PermissionRequestOverlay } from './components/PermissionRequestOverlay'
 import { useWebSocket } from './hooks/useWebSocket';
 import { useWorldStore } from './store/useWorldStore';
 import { DemoSocialProxy } from './lib/DemoSocialProxy';
+import { startDemoScenario, stopDemoScenario } from './lib/DemoScenario';
 import { WS_SOCIAL_URL } from './lib/constants';
 import type { LobbyProfile } from '@lobster-world/protocol';
 
@@ -28,6 +29,13 @@ export function App() {
 
   const proxyRef = useRef<DemoSocialProxy | null>(null);
 
+  useEffect(() => {
+    return () => {
+      stopDemoScenario();
+      proxyRef.current?.disconnect();
+    };
+  }, []);
+
   const handleJoin = useCallback(
     (profile: LobbyProfile) => {
       setLobbyPhase('joining');
@@ -35,6 +43,7 @@ export function App() {
       const proxy = new DemoSocialProxy({
         onJoined: (token) => {
           setSessionToken(token);
+          startDemoScenario();
         },
         onError: (error) => {
           setLobbyError(error);
