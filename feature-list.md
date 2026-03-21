@@ -130,8 +130,8 @@
 ### Protocol (packages/protocol)
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| P7 | Social Proxy protocol types (profile, permissions, auth) | 🔴 | — | SocialProfile, PermissionPolicy, AuthToken |
-| P8 | E2E encryption types (key exchange, signed messages) | 🔴 | — | tweetnacl Ed25519 + X25519 |
+| P7 | Social Proxy protocol types (profile, permissions, auth) | 🟢 | feature/phase2b-integration | SocialProfile, SocialPermissionPolicy, DataPartition, BudgetConfig/Usage |
+| P8 | Crypto auth types (challenge, response, lobby, dialogue consent) | 🟢 | feature/phase2b-integration | AuthChallenge, AuthResponse, LobbyJoinRequest/Result, SocialProxyUpstream/Downstream |
 
 ### Web (apps/web)
 | # | Feature | Status | Branch | Notes |
