@@ -69,6 +69,9 @@ importers:
       three:
         specifier: ^0.172.0
         version: 0.172.0
+      tweetnacl:
+        specifier: ^1.0.3
+        version: 1.0.3
       zustand:
         specifier: ^5.0.0
         version: 5.0.12(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))

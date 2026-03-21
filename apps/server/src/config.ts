@@ -35,6 +35,7 @@ export const CORS_ORIGINS = parseCorsOrigins();
 // WebSocket paths
 export const WS_PATH_LOBSTER = '/ws/lobster';
 export const WS_PATH_VIEWER = '/ws/viewer';
+export const WS_PATH_SOCIAL = '/ws/social';
 
 // Token estimation: word count * this factor
 export const TOKEN_ESTIMATION_FACTOR = 1.3;

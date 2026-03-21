@@ -302,7 +302,9 @@ export type RenderEvent =
   | { type: 'meeting_start'; meeting: Meeting }
   | { type: 'meeting_end'; meetingId: string }
   | { type: 'platform_event'; event: PlatformEvent }
-  | { type: 'team_sync'; agents: Array<{ id: string; roleId: string; name: string; color: string }> };
+  | { type: 'team_sync'; agents: Array<{ id: string; roleId: string; name: string; color: string }> }
+  | { type: 'permission_request'; request: PermissionRequest }
+  | { type: 'budget_status'; status: BudgetStatus };
 
 // --- Safety / Budget Types ---
 
@@ -449,6 +451,62 @@ export interface DialogueConsentResponse {
   accepted: boolean;
   reason?: string;
 }
+
+// --- Lobby UI Types (Phase 2b Part 2) ---
+
+export type LobbyPhase = 'lobby' | 'joining' | 'joined';
+
+export type SkillTag = 'coding' | 'design' | 'devops' | 'testing' | 'writing' | 'research';
+
+export type PermissionPreset = 'open' | 'selective' | 'private';
+
+export interface LobbyProfile {
+  displayName: string;
+  color: string;
+  bio: string;
+  skills: SkillTag[];
+  dailyTokenLimit: number;
+  sessionTokenLimit: number;
+  permissionPreset: PermissionPreset;
+}
+
+export interface PermissionRequest {
+  id: string;
+  requesterId: string;
+  requesterName: string;
+  requesterColor: string;
+  dataType: string;
+  timestamp: number;
+}
+
+export interface BudgetStatus {
+  dailyTokensUsed: number;
+  dailyTokensLimit: number;
+  dailySessionsUsed: number;
+  dailySessionsLimit: number;
+  activeSessionTokens: number;
+  activeSessionLimit: number;
+}
+
+// --- Lobby Constants ---
+
+export const LOBBY_PRESET_COLORS: string[] = [
+  '#EF4444', '#F97316', '#EAB308', '#22C55E',
+  '#3B82F6', '#8B5CF6', '#EC4899', '#06B6D4',
+  '#10B981', '#F43F5E',
+];
+
+export const LOBBY_SKILL_TAGS: SkillTag[] = [
+  'coding', 'design', 'devops', 'testing', 'writing', 'research',
+];
+
+export const PERMISSION_AUTO_DISMISS_MS = 30000;
+export const BIO_MAX_LENGTH = 140;
+export const BUDGET_DAILY_MIN = 1000;
+export const BUDGET_DAILY_MAX = 100000;
+export const BUDGET_SESSION_MIN = 100;
+export const BUDGET_SESSION_MAX = 10000;
+export const DEMO_NPC_DELAY_MS = 10000;
 
 // --- Social Proxy Protocol Events (Phase 2b) ---
 
