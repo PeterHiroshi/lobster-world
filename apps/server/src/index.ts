@@ -18,6 +18,10 @@ import { createLobsterHandler } from './ws/lobster-handler.js';
 import { createViewerHandler } from './ws/viewer-handler.js';
 import { registerRoutes } from './api/routes.js';
 import { AuditLog } from './engine/audit-log.js';
+import { WorkforceManager } from './engine/workforce.js';
+import { TaskEngine } from './engine/tasks.js';
+import { CommsEngine } from './engine/comms.js';
+import { EventProcessor } from './engine/events.js';
 
 // --- Instantiate components ---
 const connections = new ConnectionManager();
@@ -26,6 +30,10 @@ const scene = new SceneEngine();
 const dialogue = new DialogueRouter();
 const circuitBreaker = new CircuitBreaker();
 const auditLog = new AuditLog();
+const workforce = new WorkforceManager();
+const tasks = new TaskEngine();
+const comms = new CommsEngine();
+const events = new EventProcessor();
 
 // --- Create handlers ---
 const lobsterHandler = createLobsterHandler({
@@ -47,7 +55,7 @@ const server = Fastify({ logger: true });
 
 await server.register(cors, { origin: CORS_ORIGINS });
 
-registerRoutes(server, { registry, scene, dialogue, connections, auditLog });
+registerRoutes(server, { registry, scene, dialogue, connections, auditLog, workforce, tasks, comms, events });
 
 // --- WebSocket servers ---
 const lobsterWss = new WebSocketServer({ noServer: true });
@@ -137,6 +145,10 @@ export {
   dialogue,
   circuitBreaker,
   auditLog,
+  workforce,
+  tasks,
+  comms,
+  events,
   lobsterHandler,
   viewerHandler,
   shutdown,
