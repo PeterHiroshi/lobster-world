@@ -112,6 +112,137 @@ export interface SessionStats {
   endReason: 'completed' | 'budget_exceeded' | 'circuit_breaker' | 'user_ended' | 'timeout';
 }
 
+// --- Role Types ---
+
+export interface AgentRole {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  responsibilities: string[];
+  behaviorWeights: {
+    coding: number;
+    meeting: number;
+    reviewing: number;
+    socializing: number;
+  };
+}
+
+export const PRESET_ROLES: AgentRole[] = [
+  {
+    id: 'pm',
+    name: 'Product Manager',
+    icon: '📋',
+    color: '#3B82F6',
+    responsibilities: ['create tasks', 'prioritize backlog', 'run standups'],
+    behaviorWeights: { coding: 0.0, meeting: 0.5, reviewing: 0.3, socializing: 0.2 },
+  },
+  {
+    id: 'tech-lead',
+    name: 'Tech Lead',
+    icon: '🏗️',
+    color: '#8B5CF6',
+    responsibilities: ['review code', 'assign tasks', 'architecture decisions'],
+    behaviorWeights: { coding: 0.3, meeting: 0.3, reviewing: 0.3, socializing: 0.1 },
+  },
+  {
+    id: 'frontend-dev',
+    name: 'Frontend Dev',
+    icon: '🎨',
+    color: '#EC4899',
+    responsibilities: ['build UI', 'implement features', 'fix bugs'],
+    behaviorWeights: { coding: 0.7, meeting: 0.1, reviewing: 0.1, socializing: 0.1 },
+  },
+  {
+    id: 'backend-dev',
+    name: 'Backend Dev',
+    icon: '⚙️',
+    color: '#10B981',
+    responsibilities: ['build APIs', 'database work', 'server logic'],
+    behaviorWeights: { coding: 0.7, meeting: 0.1, reviewing: 0.1, socializing: 0.1 },
+  },
+  {
+    id: 'qa',
+    name: 'QA Engineer',
+    icon: '🔍',
+    color: '#F59E0B',
+    responsibilities: ['write tests', 'find bugs', 'verify fixes'],
+    behaviorWeights: { coding: 0.4, meeting: 0.1, reviewing: 0.4, socializing: 0.1 },
+  },
+  {
+    id: 'devops',
+    name: 'DevOps',
+    icon: '🚀',
+    color: '#EF4444',
+    responsibilities: ['CI/CD pipelines', 'deployments', 'monitoring'],
+    behaviorWeights: { coding: 0.4, meeting: 0.1, reviewing: 0.2, socializing: 0.3 },
+  },
+  {
+    id: 'tech-writer',
+    name: 'Tech Writer',
+    icon: '✍️',
+    color: '#6366F1',
+    responsibilities: ['documentation', 'API docs', 'guides'],
+    behaviorWeights: { coding: 0.2, meeting: 0.2, reviewing: 0.3, socializing: 0.3 },
+  },
+];
+
+// --- Task Types ---
+
+export type TaskStatus = 'todo' | 'doing' | 'review' | 'done';
+
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface Task {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assigneeId?: string;
+  createdBy: string;
+  subtasks: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+// --- Agent Communication Types ---
+
+export type MessageType = 'direct' | 'broadcast' | 'meeting' | 'async' | 'review';
+
+export interface AgentMessage {
+  id: string;
+  from: string;
+  to: string | 'all';
+  type: MessageType;
+  context?: { taskId?: string; docId?: string };
+  content: string;
+  timestamp: number;
+}
+
+export interface Meeting {
+  id: string;
+  topic: string;
+  participants: string[];
+  messages: AgentMessage[];
+  decisions: string[];
+  status: 'active' | 'ended';
+}
+
+// --- Platform Event Types ---
+
+export type PlatformEventSource = 'internal' | 'github' | 'linear' | 'notion' | 'slack';
+
+export interface PlatformEvent {
+  id: string;
+  source: PlatformEventSource;
+  type: string;
+  data: Record<string, unknown>;
+  timestamp: number;
+  processedBy?: string;
+}
+
 // --- Audit Types ---
 
 export type AuditEventType =
@@ -165,7 +296,13 @@ export type RenderEvent =
   | { type: 'dialogue_start'; sessionId: string; participants: string[]; participantNames: string[]; participantColors: string[]; intent: string }
   | { type: 'dialogue_msg'; sessionId: string; fromId: string; fromName: string; fromColor: string; content: string; turnNumber: number }
   | { type: 'dialogue_end'; sessionId: string; reason: string }
-  | { type: 'effect'; position: Vec3; effectType: string };
+  | { type: 'effect'; position: Vec3; effectType: string }
+  | { type: 'task_update'; task: Task }
+  | { type: 'task_card_move'; taskId: string; fromStatus: TaskStatus; toStatus: TaskStatus; assigneeId?: string }
+  | { type: 'meeting_start'; meeting: Meeting }
+  | { type: 'meeting_end'; meetingId: string }
+  | { type: 'platform_event'; event: PlatformEvent }
+  | { type: 'team_sync'; agents: Array<{ id: string; roleId: string; name: string; color: string }> };
 
 // --- Safety / Budget Types ---
 
@@ -234,3 +371,44 @@ export const MAX_LOBSTERS_PER_SCENE = 50;
 export const AUDIT_RING_BUFFER_SIZE = 1000;
 export const MOCK_DIALOGUE_INTERVAL_MIN_MS = 30000;
 export const MOCK_DIALOGUE_INTERVAL_MAX_MS = 60000;
+
+// Task constants
+export const MAX_TASKS_PER_PROJECT = 100;
+
+export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
+  low: '#22c55e',
+  medium: '#3b82f6',
+  high: '#f97316',
+  urgent: '#ef4444',
+};
+
+export const VALID_TASK_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+  todo: ['doing', 'done'],
+  doing: ['todo', 'review'],
+  review: ['doing', 'done'],
+  done: ['review'],
+};
+
+// Role-based desk layout positions (x, z)
+export const ROLE_DESK_POSITIONS: Record<string, { x: number; z: number }> = {
+  pm: { x: -3, z: -5 },
+  'tech-lead': { x: 0, z: -5 },
+  'frontend-dev': { x: -3, z: 0 },
+  'backend-dev': { x: 0, z: 0 },
+  qa: { x: 3, z: 0 },
+  devops: { x: 6, z: -3 },
+  'tech-writer': { x: -6, z: 0 },
+};
+
+// Meeting room position
+export const MEETING_ROOM_POSITION: Vec3 = { x: -6, y: 0, z: -5 };
+
+// Kanban wall position
+export const KANBAN_WALL_POSITION: Vec3 = { x: 0, y: 0, z: -8 };
+
+// Server rack position
+export const SERVER_RACK_POSITION: Vec3 = { x: 7, y: 0, z: -5 };
+
+// Mock scenario timing
+export const MOCK_SCENARIO_TICK_MS = 8000;
+export const MOCK_SCENARIO_INITIAL_DELAY_MS = 5000;
