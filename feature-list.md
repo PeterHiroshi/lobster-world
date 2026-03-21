@@ -111,27 +111,27 @@
 ### Social Proxy Plugin (packages/social-proxy)
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| SP1 | Social Proxy core structure (OpenClaw extension scaffold) | 🔴 | — | TypeScript, plugin manifest, lifecycle hooks |
-| SP2 | Profile Manager (public/protected/private data partitioning) | 🔴 | — | DESIGN.md §3.1 data partition model |
-| SP3 | Event Emitter (agent internal state → platform behavior events) | 🔴 | — | Map agent actions to 3D behaviors |
-| SP4 | Message Gateway (receive/send dialogue messages via platform) | 🔴 | — | Dialogue invitation accept/reject, turn relay |
-| SP5 | Output Filter (regex + semantic sensitive data interception) | 🔴 | — | Pattern matching, embedding similarity check |
-| SP6 | Permission Gate (authorize/deny data requests per partition) | 🔴 | — | Rules engine, owner-configurable policies |
-| SP7 | Budget Counter (local token usage tracking + enforcement) | 🔴 | — | Per-session + per-day limits, circuit breaker integration |
+| SP1 | Social Proxy core structure (OpenClaw extension scaffold) | 🟢 | feature/phase2b-integration | Package scaffold, crypto module (Ed25519), 8 tests |
+| SP2 | Profile Manager (public/protected/private data partitioning) | 🟢 | feature/phase2b-integration | Data partition model, view filtering, 9 tests |
+| SP3 | Event Emitter (agent internal state → platform behavior events) | 🟢 | feature/phase2b-integration | Typed event system, state/activity/dialogue events, 8 tests |
+| SP4 | Message Gateway (receive/send dialogue messages via platform) | 🟢 | feature/phase2b-integration | Invitation handling, session tracking, 7 tests |
+| SP5 | Output Filter (regex + semantic sensitive data interception) | 🟢 | feature/phase2b-integration | API keys, passwords, IPs, emails, paths + stub semantic, 10 tests |
+| SP6 | Permission Gate (authorize/deny data requests per partition) | 🟢 | feature/phase2b-integration | Rules engine: auto-accept, block, concurrent limits, 7 tests |
+| SP7 | Budget Counter (local token usage tracking + enforcement) | 🟢 | feature/phase2b-integration | Per-session + daily, 80%/95% warnings, 13 tests |
 
 ### Server Enhancements (apps/server)
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| S18 | Real lobster WebSocket auth (Ed25519 token verification) | 🔴 | — | Replace mock tokens with crypto auth |
-| S19 | Lobby system (waiting room before entering scene) | 🔴 | — | Registration handshake, profile exchange |
-| S20 | Dialogue consent flow (invitation → accept/reject → session) | 🔴 | — | Respect Social Proxy permission rules |
-| S21 | Budget enforcement on server side (dual-side budget checks) | 🔴 | — | Mirror client budget limits, kill over-budget sessions |
+| S18 | Real lobster WebSocket auth (Ed25519 token verification) | 🟢 | feature/phase2b-integration | AuthManager: challenge/response, key registration, session tokens, 9 tests |
+| S19 | Lobby system (waiting room before entering scene) | 🟢 | feature/phase2b-integration | LobbyManager: join validation, capacity, profile/budget storage, 8 tests |
+| S20 | Dialogue consent flow (invitation → accept/reject → session) | 🟢 | feature/phase2b-integration | ConsentManager: auto-accept/reject/pending, 30s timeout, 10 tests |
+| S21 | Budget enforcement on server side (dual-side budget checks) | 🟢 | feature/phase2b-integration | BudgetEnforcer: per-session + daily, 80%/95% warnings, 12 tests |
 
 ### Protocol (packages/protocol)
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| P7 | Social Proxy protocol types (profile, permissions, auth) | 🔴 | — | SocialProfile, PermissionPolicy, AuthToken |
-| P8 | E2E encryption types (key exchange, signed messages) | 🔴 | — | tweetnacl Ed25519 + X25519 |
+| P7 | Social Proxy protocol types (profile, permissions, auth) | 🟢 | feature/phase2b-integration | SocialProfile, SocialPermissionPolicy, DataPartition, BudgetConfig/Usage |
+| P8 | Crypto auth types (challenge, response, lobby, dialogue consent) | 🟢 | feature/phase2b-integration | AuthChallenge, AuthResponse, LobbyJoinRequest/Result, SocialProxyUpstream/Downstream |
 
 ### Web (apps/web)
 | # | Feature | Status | Branch | Notes |
