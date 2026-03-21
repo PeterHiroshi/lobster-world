@@ -55,7 +55,6 @@ export class DemoSocialProxy {
   private permissions: SocialPermissionPolicy = { ...DEFAULT_SOCIAL_PERMISSION_POLICY };
   private ws: WebSocket | null = null;
   private callbacks: DemoSocialProxyCallbacks;
-  private pendingNonce: string | null = null;
   private dailyTokensUsed = 0;
   private dailySessionsUsed = 0;
   private sessionTokensUsed = 0;
@@ -144,7 +143,6 @@ export class DemoSocialProxy {
 
     switch (event.type) {
       case 'auth_challenge': {
-        this.pendingNonce = event.challenge.nonce;
         const signature = this.signNonce(event.challenge.nonce);
         // Re-send lobby join with signature
         if (this.profile) {
