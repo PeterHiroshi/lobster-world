@@ -6,6 +6,7 @@ import type {
   Vec3,
 } from '@lobster-world/protocol';
 import { BUBBLE_TIMEOUT_MS } from '../lib/constants';
+import { playChatPing, playJoinSound } from '../lib/audio';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
@@ -132,6 +133,7 @@ export const useWorldStore = create<WorldState>((set, get) => ({
         });
         const id = `effect-${effectCounter}`;
         setTimeout(() => get().removeEffect(id), 3000);
+        playJoinSound();
         break;
       }
       case 'lobster_leave': {
@@ -230,6 +232,7 @@ export const useWorldStore = create<WorldState>((set, get) => ({
             effects: newEffects,
           };
         });
+        playChatPing();
         break;
       }
       case 'dialogue_msg': {

@@ -1,6 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useWorldStore } from '../src/store/useWorldStore';
 import type { RenderEvent, LobsterState, Scene } from '@lobster-world/protocol';
+
+// Mock audio module (no AudioContext in test env)
+vi.mock('../src/lib/audio', () => ({
+  playChatPing: vi.fn(),
+  playJoinSound: vi.fn(),
+  playTypingClick: vi.fn(),
+  setMuted: vi.fn(),
+  getMuted: () => true,
+}));
 
 function makeLobster(overrides: Partial<LobsterState> = {}): LobsterState {
   return {
