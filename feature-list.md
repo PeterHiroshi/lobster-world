@@ -105,3 +105,41 @@
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
 | I4 | Full Phase 2a integration (5 agents, task flow, 3D visualization) | 🟢 | feature/phase2a-core | 248 tests (223 server + 25 web), all passing |
+
+## Phase 2b — Real OpenClaw Integration
+
+### Social Proxy Plugin (packages/social-proxy)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| SP1 | Social Proxy core structure (OpenClaw extension scaffold) | 🔴 | — | TypeScript, plugin manifest, lifecycle hooks |
+| SP2 | Profile Manager (public/protected/private data partitioning) | 🔴 | — | DESIGN.md §3.1 data partition model |
+| SP3 | Event Emitter (agent internal state → platform behavior events) | 🔴 | — | Map agent actions to 3D behaviors |
+| SP4 | Message Gateway (receive/send dialogue messages via platform) | 🔴 | — | Dialogue invitation accept/reject, turn relay |
+| SP5 | Output Filter (regex + semantic sensitive data interception) | 🔴 | — | Pattern matching, embedding similarity check |
+| SP6 | Permission Gate (authorize/deny data requests per partition) | 🔴 | — | Rules engine, owner-configurable policies |
+| SP7 | Budget Counter (local token usage tracking + enforcement) | 🔴 | — | Per-session + per-day limits, circuit breaker integration |
+
+### Server Enhancements (apps/server)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| S18 | Real lobster WebSocket auth (Ed25519 token verification) | 🔴 | — | Replace mock tokens with crypto auth |
+| S19 | Lobby system (waiting room before entering scene) | 🔴 | — | Registration handshake, profile exchange |
+| S20 | Dialogue consent flow (invitation → accept/reject → session) | 🔴 | — | Respect Social Proxy permission rules |
+| S21 | Budget enforcement on server side (dual-side budget checks) | 🔴 | — | Mirror client budget limits, kill over-budget sessions |
+
+### Protocol (packages/protocol)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| P7 | Social Proxy protocol types (profile, permissions, auth) | 🔴 | — | SocialProfile, PermissionPolicy, AuthToken |
+| P8 | E2E encryption types (key exchange, signed messages) | 🔴 | — | tweetnacl Ed25519 + X25519 |
+
+### Web (apps/web)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| W28 | Lobby UI (registration form, lobster customization) | 🔴 | — | Before entering 3D scene |
+| W29 | Permission request UI (approve/deny data access popups) | 🔴 | — | Owner consent flow |
+
+### Integration
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| I5 | Social Proxy ↔ Server E2E (real auth, dialogue, budget) | 🔴 | — | Full integration with crypto auth |
