@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.2.0] — 2026-03-21
+
+### 🦞 Phase 1 — Polish & Interactive Demo
+
+#### Server Enhancements
+- Rich multi-topic mock dialogues (code review, architecture debates, coffee break chat, bug hunting)
+- Audit log — in-memory ring buffer (1000 events), `GET /api/audit` endpoint
+- CORS + environment config (`PORT`, `HOST`, `CORS_ORIGINS` from env)
+
+#### Web Enhancements
+- **Improved lobster model** — smoother body, 4 pairs of walking legs, pincer claws, eye tracking toward camera
+- **Particle effects** — sparkle burst on dialogue start, confetti on join, ambient dust particles
+- **Interactive click** — click lobster to see detail card (name, skills, stats, mood) + floor glow ring
+- **Lobby entrance animation** — lobsters appear at door and walk to desk with scale-up effect
+- **Enhanced dialogue panel** — real-time message stream, typing indicator, 3D connection lines between chatting lobsters
+- **Sound effects** — ambient office hum, typing clicks, chat notifications (Howler.js, mutable)
+- **Activity feed** — live stream of audit events in UI
+
+#### Integration
+- Circuit breaker demo — repeated dialogue auto-terminated
+- Full E2E: server mock lobsters → WS → 3D render with dialogues + effects
+
 ## [0.1.0] — 2026-03-20
 
 ### 🦞 Phase 0.5 — Weekend MVP
