@@ -1,5 +1,6 @@
 // WebSocket
 export const WS_VIEWER_URL = 'ws://localhost:3001/ws/viewer';
+export const WS_SOCIAL_URL = 'ws://localhost:3001/ws/social';
 export const API_BASE_URL = 'http://localhost:3001/api';
 
 // Reconnect
