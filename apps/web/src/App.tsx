@@ -2,6 +2,7 @@ import { Scene } from './components/Scene';
 import { StatsPanel } from './panels/StatsPanel';
 import { ChatPanel } from './panels/ChatPanel';
 import { ConnectionStatus } from './panels/ConnectionStatus';
+import { ActivityFeed } from './panels/ActivityFeed';
 import { SoundToggle } from './components/SoundToggle';
 import { useWebSocket } from './hooks/useWebSocket';
 
@@ -14,6 +15,7 @@ export function App() {
       <StatsPanel />
       <ChatPanel />
       <ConnectionStatus />
+      <ActivityFeed />
       <SoundToggle />
     </div>
   );
