@@ -122,10 +122,10 @@
 ### Server Enhancements (apps/server)
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| S18 | Real lobster WebSocket auth (Ed25519 token verification) | 🔴 | — | Replace mock tokens with crypto auth |
-| S19 | Lobby system (waiting room before entering scene) | 🔴 | — | Registration handshake, profile exchange |
-| S20 | Dialogue consent flow (invitation → accept/reject → session) | 🔴 | — | Respect Social Proxy permission rules |
-| S21 | Budget enforcement on server side (dual-side budget checks) | 🔴 | — | Mirror client budget limits, kill over-budget sessions |
+| S18 | Real lobster WebSocket auth (Ed25519 token verification) | 🟢 | feature/phase2b-integration | AuthManager: challenge/response, key registration, session tokens, 9 tests |
+| S19 | Lobby system (waiting room before entering scene) | 🟢 | feature/phase2b-integration | LobbyManager: join validation, capacity, profile/budget storage, 8 tests |
+| S20 | Dialogue consent flow (invitation → accept/reject → session) | 🟢 | feature/phase2b-integration | ConsentManager: auto-accept/reject/pending, 30s timeout, 10 tests |
+| S21 | Budget enforcement on server side (dual-side budget checks) | 🟢 | feature/phase2b-integration | BudgetEnforcer: per-session + daily, 80%/95% warnings, 12 tests |
 
 ### Protocol (packages/protocol)
 | # | Feature | Status | Branch | Notes |
