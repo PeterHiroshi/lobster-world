@@ -7,7 +7,7 @@ import type {
   EmoteType,
 } from './core.js';
 import type { DialogueType, SessionStats } from './dialogue.js';
-import type { Task, TaskStatus, Meeting, PlatformEvent, MessageType } from './workforce.js';
+import type { Task, TaskStatus, Meeting, PlatformEvent } from './workforce.js';
 import type { PermissionRequest, BudgetStatus } from './lobby.js';
 
 // --- Protocol Events ---

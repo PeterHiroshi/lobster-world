@@ -1,6 +1,5 @@
 import type { StateCreator } from 'zustand';
 import type { LobsterState, Vec3 } from '@lobster-world/protocol';
-import { playJoinSound } from '../../lib/audio';
 
 export interface LobsterStats {
   messagesSent: number;
