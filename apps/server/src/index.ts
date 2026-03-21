@@ -22,6 +22,7 @@ import { WorkforceManager } from './engine/workforce.js';
 import { TaskEngine } from './engine/tasks.js';
 import { CommsEngine } from './engine/comms.js';
 import { EventProcessor } from './engine/events.js';
+import { startTeamScenario } from './mock/mock-team.js';
 
 // --- Instantiate components ---
 const connections = new ConnectionManager();
@@ -114,8 +115,13 @@ async function start(): Promise<void> {
     connections.startHeartbeat();
     startBroadcastLoop();
 
+    // Start team scenario (5 agents with project lifecycle)
+    const serverUrl = `ws://localhost:${SERVER_PORT}`;
+    const teamRunner = startTeamScenario(serverUrl, workforce, tasks, comms, events, connections);
+
     server.log.info(`Server listening on ${SERVER_HOST}:${SERVER_PORT}`);
     server.log.info(`WebSocket endpoints: ${WS_PATH_LOBSTER}, ${WS_PATH_VIEWER}`);
+    server.log.info('Team scenario started with 5 agents');
   } catch (err) {
     server.log.error(err);
     process.exit(1);
