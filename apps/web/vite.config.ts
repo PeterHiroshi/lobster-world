@@ -7,4 +7,15 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three'],
+          r3f: ['@react-three/fiber', '@react-three/drei'],
+          vendor: ['react', 'react-dom', 'zustand'],
+        },
+      },
+    },
+  },
 });
