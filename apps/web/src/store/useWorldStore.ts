@@ -7,7 +7,12 @@ import type {
   Task,
   Meeting,
   PlatformEvent,
+  LobbyPhase,
+  LobbyProfile,
+  PermissionRequest,
+  BudgetStatus,
 } from '@lobster-world/protocol';
+import { PERMISSION_AUTO_DISMISS_MS } from '@lobster-world/protocol';
 import { BUBBLE_TIMEOUT_MS } from '../lib/constants';
 import { playChatPing, playJoinSound } from '../lib/audio';
 
@@ -70,6 +75,13 @@ export interface TaskCardAnimation {
   startTime: number;
 }
 
+export interface LobbyState {
+  phase: LobbyPhase;
+  profile: LobbyProfile | null;
+  sessionToken: string | null;
+  error: string | null;
+}
+
 interface WorldState {
   lobsters: Record<string, LobsterState>;
   dialogues: DialogueSession[];
@@ -87,6 +99,9 @@ interface WorldState {
   teamAgents: TeamAgent[];
   platformEvents: PlatformEvent[];
   taskAnimations: TaskCardAnimation[];
+  lobbyState: LobbyState;
+  permissionRequests: PermissionRequest[];
+  budgetStatus: BudgetStatus | null;
 
   handleRenderEvent: (event: RenderEvent) => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
@@ -97,6 +112,13 @@ interface WorldState {
   removeEffect: (id: string) => void;
   clearEntrance: (lobsterId: string) => void;
   removeTaskAnimation: (taskId: string) => void;
+  setLobbyPhase: (phase: LobbyPhase) => void;
+  setLobbyProfile: (profile: LobbyProfile) => void;
+  setLobbyError: (error: string | null) => void;
+  setSessionToken: (token: string) => void;
+  addPermissionRequest: (request: PermissionRequest) => void;
+  resolvePermissionRequest: (id: string) => void;
+  setBudgetStatus: (status: BudgetStatus) => void;
 }
 
 let effectCounter = 0;
@@ -118,6 +140,9 @@ export const useWorldStore = create<WorldState>((set, get) => ({
   teamAgents: [],
   platformEvents: [],
   taskAnimations: [],
+  lobbyState: { phase: 'lobby', profile: null, sessionToken: null, error: null },
+  permissionRequests: [],
+  budgetStatus: null,
 
   handleRenderEvent: (event: RenderEvent) => {
     switch (event.type) {
@@ -391,6 +416,17 @@ export const useWorldStore = create<WorldState>((set, get) => ({
         set({ teamAgents: event.agents });
         break;
       }
+      case 'permission_request': {
+        set((state) => ({
+          permissionRequests: [...state.permissionRequests, event.request],
+        }));
+        setTimeout(() => get().resolvePermissionRequest(event.request.id), PERMISSION_AUTO_DISMISS_MS);
+        break;
+      }
+      case 'budget_status': {
+        set({ budgetStatus: event.status });
+        break;
+      }
     }
   },
 
@@ -441,5 +477,46 @@ export const useWorldStore = create<WorldState>((set, get) => ({
     set((state) => ({
       taskAnimations: state.taskAnimations.filter((a) => a.taskId !== taskId),
     }));
+  },
+
+  setLobbyPhase: (phase: LobbyPhase) => {
+    set((state) => ({
+      lobbyState: { ...state.lobbyState, phase, error: null },
+    }));
+  },
+
+  setLobbyProfile: (profile: LobbyProfile) => {
+    set((state) => ({
+      lobbyState: { ...state.lobbyState, profile },
+    }));
+  },
+
+  setLobbyError: (error: string | null) => {
+    set((state) => ({
+      lobbyState: { ...state.lobbyState, error, phase: error ? 'lobby' : state.lobbyState.phase },
+    }));
+  },
+
+  setSessionToken: (token: string) => {
+    set((state) => ({
+      lobbyState: { ...state.lobbyState, sessionToken: token, phase: 'joined' },
+    }));
+  },
+
+  addPermissionRequest: (request: PermissionRequest) => {
+    set((state) => ({
+      permissionRequests: [...state.permissionRequests, request],
+    }));
+    setTimeout(() => get().resolvePermissionRequest(request.id), PERMISSION_AUTO_DISMISS_MS);
+  },
+
+  resolvePermissionRequest: (id: string) => {
+    set((state) => ({
+      permissionRequests: state.permissionRequests.filter((r) => r.id !== id),
+    }));
+  },
+
+  setBudgetStatus: (status: BudgetStatus) => {
+    set({ budgetStatus: status });
   },
 }));

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useWorldStore } from '../src/store/useWorldStore';
-import type { RenderEvent, LobsterState, Scene } from '@lobster-world/protocol';
+import type { RenderEvent, LobsterState, Scene, PermissionRequest, BudgetStatus } from '@lobster-world/protocol';
 
 // Mock audio module (no AudioContext in test env)
 vi.mock('../src/lib/audio', () => ({
@@ -325,5 +325,140 @@ describe('useWorldStore', () => {
     const sparkle = state.effects.find((e) => e.type === 'sparkle');
     expect(sparkle).toBeDefined();
     expect(sparkle!.position.x).toBe(1); // midpoint
+  });
+
+  // --- Phase 2b Part 2: Lobby State ---
+
+  it('starts with lobby phase', () => {
+    const state = useWorldStore.getState();
+    expect(state.lobbyState.phase).toBe('lobby');
+    expect(state.lobbyState.profile).toBeNull();
+    expect(state.lobbyState.sessionToken).toBeNull();
+    expect(state.lobbyState.error).toBeNull();
+  });
+
+  it('setLobbyPhase transitions phase and clears error', () => {
+    useWorldStore.setState({
+      lobbyState: { phase: 'lobby', profile: null, sessionToken: null, error: 'some error' },
+    });
+    useWorldStore.getState().setLobbyPhase('joining');
+    const state = useWorldStore.getState();
+    expect(state.lobbyState.phase).toBe('joining');
+    expect(state.lobbyState.error).toBeNull();
+  });
+
+  it('setLobbyProfile stores profile', () => {
+    const profile = {
+      displayName: 'Test',
+      color: '#EF4444',
+      bio: 'Hello',
+      skills: ['coding' as const],
+      dailyTokenLimit: 50000,
+      sessionTokenLimit: 5000,
+      permissionPreset: 'open' as const,
+    };
+    useWorldStore.getState().setLobbyProfile(profile);
+    expect(useWorldStore.getState().lobbyState.profile).toEqual(profile);
+  });
+
+  it('setLobbyError sets error and reverts to lobby phase', () => {
+    useWorldStore.setState({
+      lobbyState: { phase: 'joining', profile: null, sessionToken: null, error: null },
+    });
+    useWorldStore.getState().setLobbyError('Auth failed');
+    const state = useWorldStore.getState();
+    expect(state.lobbyState.error).toBe('Auth failed');
+    expect(state.lobbyState.phase).toBe('lobby');
+  });
+
+  it('setLobbyError with null clears error', () => {
+    useWorldStore.setState({
+      lobbyState: { phase: 'joining', profile: null, sessionToken: null, error: 'err' },
+    });
+    useWorldStore.getState().setLobbyError(null);
+    const state = useWorldStore.getState();
+    expect(state.lobbyState.error).toBeNull();
+    expect(state.lobbyState.phase).toBe('joining');
+  });
+
+  it('setSessionToken transitions to joined phase', () => {
+    useWorldStore.setState({
+      lobbyState: { phase: 'joining', profile: null, sessionToken: null, error: null },
+    });
+    useWorldStore.getState().setSessionToken('token-abc');
+    const state = useWorldStore.getState();
+    expect(state.lobbyState.sessionToken).toBe('token-abc');
+    expect(state.lobbyState.phase).toBe('joined');
+  });
+
+  // --- Permission Requests ---
+
+  it('addPermissionRequest adds to list', () => {
+    const request: PermissionRequest = {
+      id: 'perm-1',
+      requesterId: 'lobster-2',
+      requesterName: 'Suki',
+      requesterColor: '#4ecdc4',
+      dataType: 'skills',
+      timestamp: Date.now(),
+    };
+    useWorldStore.getState().addPermissionRequest(request);
+    expect(useWorldStore.getState().permissionRequests).toHaveLength(1);
+    expect(useWorldStore.getState().permissionRequests[0].id).toBe('perm-1');
+  });
+
+  it('resolvePermissionRequest removes from list', () => {
+    const request: PermissionRequest = {
+      id: 'perm-1',
+      requesterId: 'lobster-2',
+      requesterName: 'Suki',
+      requesterColor: '#4ecdc4',
+      dataType: 'skills',
+      timestamp: Date.now(),
+    };
+    useWorldStore.setState({ permissionRequests: [request] });
+    useWorldStore.getState().resolvePermissionRequest('perm-1');
+    expect(useWorldStore.getState().permissionRequests).toHaveLength(0);
+  });
+
+  it('handles permission_request RenderEvent', () => {
+    const request: PermissionRequest = {
+      id: 'perm-2',
+      requesterId: 'lobster-3',
+      requesterName: 'Phil',
+      requesterColor: '#ffd93d',
+      dataType: 'activity',
+      timestamp: Date.now(),
+    };
+    useWorldStore.getState().handleRenderEvent({ type: 'permission_request', request });
+    expect(useWorldStore.getState().permissionRequests).toHaveLength(1);
+  });
+
+  // --- Budget Status ---
+
+  it('setBudgetStatus updates budget', () => {
+    const status: BudgetStatus = {
+      dailyTokensUsed: 10000,
+      dailyTokensLimit: 50000,
+      dailySessionsUsed: 2,
+      dailySessionsLimit: 20,
+      activeSessionTokens: 500,
+      activeSessionLimit: 5000,
+    };
+    useWorldStore.getState().setBudgetStatus(status);
+    expect(useWorldStore.getState().budgetStatus).toEqual(status);
+  });
+
+  it('handles budget_status RenderEvent', () => {
+    const status: BudgetStatus = {
+      dailyTokensUsed: 5000,
+      dailyTokensLimit: 50000,
+      dailySessionsUsed: 1,
+      dailySessionsLimit: 20,
+      activeSessionTokens: 200,
+      activeSessionLimit: 5000,
+    };
+    useWorldStore.getState().handleRenderEvent({ type: 'budget_status', status });
+    expect(useWorldStore.getState().budgetStatus).toEqual(status);
   });
 });
