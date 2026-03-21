@@ -65,3 +65,43 @@
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
 | I3 | Full integration: server + web E2E with dialogue flow | 🟢 | feature/phase1-polish | Activity feed, dialogue connections, circuit breaker visible |
+
+## Phase 2a — Core Platform Features
+
+### Protocol (packages/protocol)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| P1 | Role system types (AgentRole, PRESET_ROLES with 7 roles) | 🟢 | feature/phase2a-core | PM, Tech Lead, Frontend/Backend Dev, QA, DevOps, Tech Writer |
+| P2 | Task types (Task, TaskStatus, TaskPriority, transitions) | 🟢 | feature/phase2a-core | VALID_TASK_TRANSITIONS, TASK_PRIORITY_COLORS |
+| P3 | Communication types (AgentMessage, Meeting, MessageType) | 🟢 | feature/phase2a-core | direct, broadcast, meeting, async, review |
+| P4 | Platform event types (PlatformEvent, PlatformEventSource) | 🟢 | feature/phase2a-core | internal, github, linear, notion, slack |
+| P5 | New RenderEvent variants (task, meeting, team_sync) | 🟢 | feature/phase2a-core | task_update, task_card_move, meeting_start/end, platform_event, team_sync |
+| P6 | Layout constants (desk positions, meeting room, kanban wall) | 🟢 | feature/phase2a-core | ROLE_DESK_POSITIONS, MEETING_ROOM/KANBAN_WALL/SERVER_RACK positions |
+
+### Server (apps/server)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| S12 | Workforce Manager (role registration, desk assignment, workload) | 🟢 | feature/phase2a-core | AgentEntry, findBestAgent, 21 tests |
+| S13 | Task Engine (CRUD, status transitions, auto-assign, subtasks) | 🟢 | feature/phase2a-core | CreateTaskOpts, VALID_TASK_TRANSITIONS, 27 tests |
+| S14 | Communication System (messages, meetings, broadcast, decisions) | 🟢 | feature/phase2a-core | Direct/broadcast/meeting messages, 27 tests |
+| S15 | Event Processor (emit, handlers, mock generators) | 🟢 | feature/phase2a-core | new_issue, pr_created, ci_failed, deploy_success, 15 tests |
+| S16 | REST API routes (agents, tasks, messages, meetings, events) | 🟢 | feature/phase2a-core | Full CRUD on /api/agents, /api/tasks, /api/meetings, /api/events |
+| S17 | Enhanced mock team scenario (5 agents, project lifecycle) | 🟢 | feature/phase2a-core | Alice(PM), Bob(TL), Carol(BE), Dave(FE), Eve(QA), 15-step scenario |
+
+### Web (apps/web)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| W19 | 3D Kanban Wall (4-column task board with task cards) | 🟢 | feature/phase2a-core | Wall mesh, column headers, TaskCard3D children |
+| W20 | TaskCard3D (priority-colored cards, hover, click-to-detail) | 🟢 | feature/phase2a-core | Priority colors, hover z-offset, animation pulse |
+| W21 | AgentDesk (role-based desks with nameplates) | 🟢 | feature/phase2a-core | Nameplate with role icon, monitor glow |
+| W22 | ServerRack (blinking LED rack for DevOps area) | 🟢 | feature/phase2a-core | 3 shelves, 6 LEDs, staggered blink animation |
+| W23 | MeetingRoom (round table, active meeting topic display) | 🟢 | feature/phase2a-core | 4 chairs, topic text, reads meetings from store |
+| W24 | TaskPanel (task detail side panel on card click) | 🟢 | feature/phase2a-core | Title, description, status/priority badges, subtasks |
+| W25 | TeamPanel (team roster with roles and workload) | 🟢 | feature/phase2a-core | Agent list, role icons, task count, online status |
+| W26 | Store update (new RenderEvent handlers for Phase 2a) | 🟢 | feature/phase2a-core | tasks, meetings, teamAgents, platformEvents, taskAnimations |
+| W27 | Office scene integration (role-based layout, new components) | 🟢 | feature/phase2a-core | AgentDesks, KanbanWall, MeetingRoom, ServerRack |
+
+### Integration
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| I4 | Full Phase 2a integration (5 agents, task flow, 3D visualization) | 🟢 | feature/phase2a-core | 248 tests (223 server + 25 web), all passing |
