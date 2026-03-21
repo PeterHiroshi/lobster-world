@@ -24,12 +24,23 @@ export const CAMERA_FOCUS_OFFSET: [number, number, number] = [2, 2, 2];
 export const CAMERA_LERP_FACTOR = 0.03;
 
 // Scene
-export const FLOOR_SIZE = 20;
+export const FLOOR_SIZE = 24;
 export const DESK_POSITIONS: [number, number][] = [
   [-3, -2], [0, -2], [3, -2],
   [-3, 2], [0, 2], [3, 2],
 ];
-export const COFFEE_AREA_POSITION: [number, number] = [6, 0];
+export const COFFEE_AREA_POSITION: [number, number] = [6, 3];
+
+// Task card animation
+export const TASK_CARD_ANIMATION_DURATION_MS = 1500;
+
+// Task status badge colors
+export const TASK_STATUS_COLORS: Record<string, string> = {
+  todo: '#94a3b8',
+  doing: '#3b82f6',
+  review: '#f59e0b',
+  done: '#22c55e',
+};
 
 // Lobster
 export const LOBSTER_SCALE = 0.5;

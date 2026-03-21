@@ -4,6 +4,9 @@ import type {
   RenderEvent,
   DialogueSession,
   Vec3,
+  Task,
+  Meeting,
+  PlatformEvent,
 } from '@lobster-world/protocol';
 import { BUBBLE_TIMEOUT_MS } from '../lib/constants';
 import { playChatPing, playJoinSound } from '../lib/audio';
@@ -53,6 +56,20 @@ export interface EntranceAnimation {
   startTime: number;
 }
 
+export interface TeamAgent {
+  id: string;
+  roleId: string;
+  name: string;
+  color: string;
+}
+
+export interface TaskCardAnimation {
+  taskId: string;
+  fromStatus: string;
+  toStatus: string;
+  startTime: number;
+}
+
 interface WorldState {
   lobsters: Record<string, LobsterState>;
   dialogues: DialogueSession[];
@@ -60,18 +77,26 @@ interface WorldState {
   stats: WorldStats;
   focusLobsterId: string | null;
   selectedLobsterId: string | null;
+  selectedTaskId: string | null;
   lobsterStats: Record<string, LobsterStats>;
   activeDialogues: Record<string, ActiveDialogue>;
   effects: EffectEntry[];
   entranceAnimations: Record<string, EntranceAnimation>;
+  tasks: Record<string, Task>;
+  meetings: Record<string, Meeting>;
+  teamAgents: TeamAgent[];
+  platformEvents: PlatformEvent[];
+  taskAnimations: TaskCardAnimation[];
 
   handleRenderEvent: (event: RenderEvent) => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
   setFocusLobster: (id: string | null) => void;
   setSelectedLobster: (id: string | null) => void;
+  setSelectedTask: (id: string | null) => void;
   clearBubble: (lobsterId: string) => void;
   removeEffect: (id: string) => void;
   clearEntrance: (lobsterId: string) => void;
+  removeTaskAnimation: (taskId: string) => void;
 }
 
 let effectCounter = 0;
@@ -83,10 +108,16 @@ export const useWorldStore = create<WorldState>((set, get) => ({
   stats: { lobsterCount: 0, activeDialogues: 0, totalMessages: 0 },
   focusLobsterId: null,
   selectedLobsterId: null,
+  selectedTaskId: null,
   lobsterStats: {},
   activeDialogues: {},
   effects: [],
   entranceAnimations: {},
+  tasks: {},
+  meetings: {},
+  teamAgents: [],
+  platformEvents: [],
+  taskAnimations: [],
 
   handleRenderEvent: (event: RenderEvent) => {
     switch (event.type) {
@@ -305,6 +336,61 @@ export const useWorldStore = create<WorldState>((set, get) => ({
         setTimeout(() => get().removeEffect(effectId), 3000);
         break;
       }
+      case 'task_update': {
+        set((state) => ({
+          tasks: { ...state.tasks, [event.task.id]: event.task },
+        }));
+        break;
+      }
+      case 'task_card_move': {
+        const anim: TaskCardAnimation = {
+          taskId: event.taskId,
+          fromStatus: event.fromStatus,
+          toStatus: event.toStatus,
+          startTime: Date.now(),
+        };
+        set((state) => {
+          const task = state.tasks[event.taskId];
+          const updatedTasks = task
+            ? { ...state.tasks, [event.taskId]: { ...task, status: event.toStatus, assigneeId: event.assigneeId ?? task.assigneeId } }
+            : state.tasks;
+          return {
+            tasks: updatedTasks,
+            taskAnimations: [...state.taskAnimations, anim],
+          };
+        });
+        setTimeout(() => get().removeTaskAnimation(event.taskId), 1500);
+        break;
+      }
+      case 'meeting_start': {
+        set((state) => ({
+          meetings: { ...state.meetings, [event.meeting.id]: event.meeting },
+        }));
+        break;
+      }
+      case 'meeting_end': {
+        set((state) => {
+          const meeting = state.meetings[event.meetingId];
+          if (!meeting) return state;
+          return {
+            meetings: {
+              ...state.meetings,
+              [event.meetingId]: { ...meeting, status: 'ended' as const },
+            },
+          };
+        });
+        break;
+      }
+      case 'platform_event': {
+        set((state) => ({
+          platformEvents: [...state.platformEvents.slice(-49), event.event],
+        }));
+        break;
+      }
+      case 'team_sync': {
+        set({ teamAgents: event.agents });
+        break;
+      }
     }
   },
 
@@ -318,6 +404,10 @@ export const useWorldStore = create<WorldState>((set, get) => ({
 
   setSelectedLobster: (id: string | null) => {
     set({ selectedLobsterId: id });
+  },
+
+  setSelectedTask: (id: string | null) => {
+    set({ selectedTaskId: id });
   },
 
   clearBubble: (lobsterId: string) => {
@@ -345,5 +435,11 @@ export const useWorldStore = create<WorldState>((set, get) => ({
       delete updated[lobsterId];
       return { entranceAnimations: updated };
     });
+  },
+
+  removeTaskAnimation: (taskId: string) => {
+    set((state) => ({
+      taskAnimations: state.taskAnimations.filter((a) => a.taskId !== taskId),
+    }));
   },
 }));
