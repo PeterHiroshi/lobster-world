@@ -34,12 +34,17 @@ export interface UiSlice {
   selectedLobsterId: string | null;
   selectedTaskId: string | null;
   theme: Theme;
+  tourStep: number;
+  tourActive: boolean;
 
   setConnectionStatus: (status: ConnectionStatus) => void;
   setFocusLobster: (id: string | null) => void;
   setSelectedLobster: (id: string | null) => void;
   setSelectedTask: (id: string | null) => void;
   toggleTheme: () => void;
+  setTourStep: (step: number) => void;
+  startTour: () => void;
+  skipTour: () => void;
 }
 
 export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) => {
@@ -53,6 +58,8 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
     selectedLobsterId: null,
     selectedTaskId: null,
     theme: initialTheme,
+    tourStep: 0,
+    tourActive: false,
 
     setConnectionStatus: (status: ConnectionStatus) => {
       set({ connectionStatus: status });
@@ -76,5 +83,9 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
       try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch { /* noop */ }
       set({ theme: next });
     },
+
+    setTourStep: (step: number) => set({ tourStep: step }),
+    startTour: () => set({ tourActive: true, tourStep: 0 }),
+    skipTour: () => set({ tourActive: false, tourStep: -1 }),
   };
 };

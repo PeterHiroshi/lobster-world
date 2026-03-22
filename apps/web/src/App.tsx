@@ -12,6 +12,7 @@ import { MobileNav } from './components/MobileNav';
 import { LobbyScreen } from './components/LobbyScreen';
 import { LandingPage } from './components/LandingPage';
 import { PermissionRequestOverlay } from './components/PermissionRequestOverlay';
+import { DemoTour } from './components/DemoTour';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useIsMobile } from './hooks/useMediaQuery';
 
@@ -122,6 +123,7 @@ export function App() {
       <SoundToggle />
       <ThemeToggle />
       <PermissionRequestOverlay />
+      <DemoTour />
       {isMobile && <MobileNav />}
     </div>
   );
