@@ -1,6 +1,7 @@
 // WebSocket
-export const WS_VIEWER_URL = 'ws://localhost:3001/ws/viewer';
-export const API_BASE_URL = 'http://localhost:3001/api';
+export const WS_VIEWER_URL = import.meta.env.VITE_WS_VIEWER_URL ?? 'ws://localhost:3001/ws/viewer';
+export const WS_SOCIAL_URL = import.meta.env.VITE_WS_SOCIAL_URL ?? 'ws://localhost:3001/ws/social';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001/api';
 
 // Reconnect
 export const RECONNECT_BASE_DELAY_MS = 1000;
