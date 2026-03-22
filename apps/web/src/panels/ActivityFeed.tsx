@@ -43,7 +43,18 @@ const EventItem = memo(function EventItem({ event }: { event: AuditEvent }) {
   );
 });
 
-export function ActivityFeed() {
+function EventList({ events }: { events: AuditEvent[] }) {
+  if (events.length === 0) {
+    return <div className="opacity-50 text-sm p-3 text-center">No events yet</div>;
+  }
+  return (
+    <div className="divide-y divide-gray-300/20 dark:divide-gray-700/50">
+      {events.map((event, i) => <EventItem key={`${event.timestamp}-${i}`} event={event} />)}
+    </div>
+  );
+}
+
+export function ActivityFeed({ embedded }: { embedded?: boolean }) {
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -65,8 +76,10 @@ export function ActivityFeed() {
     return () => clearInterval(interval);
   }, [fetchEvents]);
 
+  if (embedded) return <EventList events={events} />;
+
   return (
-    <div className="absolute bottom-3 left-3 z-10 w-72">
+    <div className="absolute bottom-3 left-3 z-10 w-72 hidden md:block">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full panel-glass px-3 py-2 rounded-t-lg text-sm font-medium flex justify-between items-center hover:opacity-90 transition-colors"
@@ -78,12 +91,8 @@ export function ActivityFeed() {
       </button>
 
       {isOpen && (
-        <div className="panel-glass rounded-b-lg max-h-60 overflow-y-auto divide-y divide-gray-300/20 dark:divide-gray-700/50 border-t-0">
-          {events.length === 0 ? (
-            <div className="text-gray-500 text-sm p-3 text-center">No events yet</div>
-          ) : (
-            events.map((event, i) => <EventItem key={`${event.timestamp}-${i}`} event={event} />)
-          )}
+        <div className="panel-glass rounded-b-lg max-h-60 overflow-y-auto border-t-0">
+          <EventList events={events} />
         </div>
       )}
     </div>

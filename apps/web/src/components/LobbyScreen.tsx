@@ -55,9 +55,9 @@ function LobbyScreenInner({ onJoin }: LobbyScreenProps) {
   const canSubmit = displayName.trim().length > 0 && !isJoining;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-100 to-slate-100 dark:from-slate-900 dark:via-indigo-950 dark:to-slate-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gradient-to-br from-slate-100 via-indigo-100 to-slate-100 dark:from-slate-900 dark:via-indigo-950 dark:to-slate-900">
       <ThemeToggle />
-      <div className="w-full max-w-lg mx-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
+      <div className="w-full max-w-lg mx-4 my-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-1 text-center">Lobster World</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm text-center mb-6">Configure your lobster and enter the virtual office</p>
 
@@ -130,7 +130,7 @@ function LobbyScreenInner({ onJoin }: LobbyScreenProps) {
         </div>
 
         {/* Budget Sliders */}
-        <div className="mb-4 grid grid-cols-2 gap-4">
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
               Daily Token Limit: {dailyTokenLimit.toLocaleString()}

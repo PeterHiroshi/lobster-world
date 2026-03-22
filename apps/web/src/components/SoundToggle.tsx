@@ -13,7 +13,7 @@ export function SoundToggle() {
   return (
     <button
       onClick={toggle}
-      className="absolute bottom-3 right-3 z-10 panel-glass px-3 py-2 rounded-lg text-sm hover:opacity-90 transition-colors"
+      className="absolute bottom-3 right-3 z-10 panel-glass px-3 py-2 rounded-lg text-sm hover:opacity-90 transition-colors hidden md:block"
       title={muted ? 'Unmute sounds' : 'Mute sounds'}
     >
       {muted ? 'Sound Off' : 'Sound On'}

@@ -8,9 +8,11 @@ import { TeamPanel } from './panels/TeamPanel';
 import { BudgetBar } from './panels/BudgetBar';
 import { SoundToggle } from './components/SoundToggle';
 import { ThemeToggle } from './components/ThemeToggle';
+import { MobileNav } from './components/MobileNav';
 import { LobbyScreen } from './components/LobbyScreen';
 import { PermissionRequestOverlay } from './components/PermissionRequestOverlay';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { useIsMobile } from './hooks/useMediaQuery';
 
 const Scene = lazy(() => import('./components/Scene').then((m) => ({ default: m.Scene })));
 import { useWebSocket } from './hooks/useWebSocket';
@@ -22,6 +24,7 @@ import type { LobbyProfile } from '@lobster-world/protocol';
 
 export function App() {
   useWebSocket();
+  const isMobile = useIsMobile();
 
   const phase = useWorldStore((s) => s.lobbyState.phase);
   const setLobbyPhase = useWorldStore((s) => s.setLobbyPhase);
@@ -95,6 +98,7 @@ export function App() {
       <SoundToggle />
       <ThemeToggle />
       <PermissionRequestOverlay />
+      {isMobile && <MobileNav />}
     </div>
   );
 }

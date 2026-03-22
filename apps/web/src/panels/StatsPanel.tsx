@@ -4,7 +4,7 @@ export function StatsPanel() {
   const stats = useWorldStore((s) => s.stats);
 
   return (
-    <div className="absolute top-3 left-3 flex gap-3 z-10">
+    <div className="absolute top-3 left-3 flex gap-3 z-10 hidden md:flex">
       <StatBadge label="Lobsters" value={stats.lobsterCount} />
       <StatBadge label="Dialogues" value={stats.activeDialogues} />
       <StatBadge label="Messages" value={stats.totalMessages} />

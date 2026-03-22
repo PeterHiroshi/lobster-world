@@ -14,7 +14,7 @@ function BudgetBarInner() {
 
   return (
     <div
-      className="fixed bottom-4 left-4 z-30 panel-glass rounded-lg p-3 text-xs w-56"
+      className="fixed bottom-4 left-4 z-30 panel-glass rounded-lg p-3 text-xs w-56 hidden md:block"
       data-testid="budget-bar"
     >
       <div className="text-slate-400 font-medium mb-2">Budget</div>
