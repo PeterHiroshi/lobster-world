@@ -136,10 +136,10 @@
 ### Web (apps/web)
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| W28 | Lobby UI (registration form, lobster customization) | 🔴 | — | Before entering 3D scene |
-| W29 | Permission request UI (approve/deny data access popups) | 🔴 | — | Owner consent flow |
+| W28 | Lobby UI (registration form, lobster customization) | 🟢 | feature/phase2b-part2 | Full registration + Ed25519 auth + color picker |
+| W29 | Permission request UI (approve/deny data access popups) | 🟢 | feature/phase2b-part2 | Stacked notifications, 30s auto-deny |
 
 ### Integration
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
-| I5 | Social Proxy ↔ Server E2E (real auth, dialogue, budget) | 🔴 | — | Full integration with crypto auth |
+| I5 | Social Proxy ↔ Server E2E (real auth, dialogue, budget) | 🟢 | feature/phase2b-part2 | DemoSocialProxy + full auth/lobby/dialogue/budget flow |
