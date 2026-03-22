@@ -118,16 +118,16 @@ export function ChatPanel() {
     <div className="absolute top-14 right-3 z-10 w-80">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-gray-900/80 backdrop-blur text-white px-3 py-2 rounded-t-lg text-sm font-medium flex justify-between items-center hover:bg-gray-800/80 transition-colors"
+        className="w-full panel-glass px-3 py-2 rounded-t-lg text-sm font-medium flex justify-between items-center hover:opacity-90 transition-colors"
       >
         <span>Dialogues</span>
-        <span className="text-gray-400 text-xs">
+        <span className="opacity-50 text-xs">
           {stats.activeDialogues} active {isOpen ? '\u25B2' : '\u25BC'}
         </span>
       </button>
 
       {isOpen && (
-        <div className="bg-gray-900/80 backdrop-blur rounded-b-lg max-h-96 overflow-y-auto">
+        <div className="panel-glass rounded-b-lg max-h-96 overflow-y-auto border-t-0">
           {dialogueList.length === 0 ? (
             <div className="text-gray-500 text-sm p-3 text-center">
               {Object.keys(lobsters).length === 0

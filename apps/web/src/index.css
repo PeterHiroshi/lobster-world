@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 html,
 body,
 #root {
@@ -8,4 +10,29 @@ body,
   margin: 0;
   padding: 0;
   overflow: hidden;
+}
+
+/* Glass-morphism panel utility */
+.panel-glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #1e293b;
+}
+
+.dark .panel-glass {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+/* Scrollbar styling for panels */
+.panel-glass ::-webkit-scrollbar {
+  width: 4px;
+}
+
+.panel-glass ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 2px;
 }

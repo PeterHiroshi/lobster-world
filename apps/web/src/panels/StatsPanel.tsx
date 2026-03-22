@@ -14,8 +14,8 @@ export function StatsPanel() {
 
 function StatBadge({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-gray-900/80 backdrop-blur text-white px-3 py-1.5 rounded-lg text-sm">
-      <span className="text-gray-400">{label}: </span>
+    <div className="panel-glass px-3 py-1.5 rounded-lg text-sm">
+      <span className="opacity-60">{label}: </span>
       <span className="font-semibold">{value}</span>
     </div>
   );

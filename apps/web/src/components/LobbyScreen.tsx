@@ -1,5 +1,6 @@
 import { useState, useCallback, memo } from 'react';
 import { useWorldStore } from '../store/useWorldStore';
+import { ThemeToggle } from './ThemeToggle';
 import type { LobbyProfile, SkillTag, PermissionPreset } from '@lobster-world/protocol';
 import {
   LOBBY_PRESET_COLORS,
@@ -54,20 +55,21 @@ function LobbyScreenInner({ onJoin }: LobbyScreenProps) {
   const canSubmit = displayName.trim().length > 0 && !isJoining;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900">
-      <div className="w-full max-w-lg mx-4 bg-slate-800/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-slate-700">
-        <h1 className="text-3xl font-bold text-white mb-1 text-center">Lobster World</h1>
-        <p className="text-slate-400 text-sm text-center mb-6">Configure your lobster and enter the virtual office</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-100 to-slate-100 dark:from-slate-900 dark:via-indigo-950 dark:to-slate-900">
+      <ThemeToggle />
+      <div className="w-full max-w-lg mx-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-1 text-center">Lobster World</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm text-center mb-6">Configure your lobster and enter the virtual office</p>
 
         {/* Display Name */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-slate-300 mb-1">Display Name *</label>
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Display Name *</label>
           <input
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Enter your lobster name..."
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             maxLength={30}
             data-testid="display-name-input"
           />
@@ -75,14 +77,14 @@ function LobbyScreenInner({ onJoin }: LobbyScreenProps) {
 
         {/* Color Picker */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-slate-300 mb-1">Color</label>
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Color</label>
           <div className="flex gap-2 flex-wrap" data-testid="color-picker">
             {LOBBY_PRESET_COLORS.map((c) => (
               <button
                 key={c}
                 onClick={() => setColor(c)}
                 className={`w-8 h-8 rounded-full border-2 transition-transform ${
-                  color === c ? 'border-white scale-110' : 'border-transparent'
+                  color === c ? 'border-slate-900 dark:border-white scale-110' : 'border-transparent'
                 }`}
                 style={{ backgroundColor: c }}
                 aria-label={`Color ${c}`}
@@ -94,21 +96,21 @@ function LobbyScreenInner({ onJoin }: LobbyScreenProps) {
 
         {/* Bio */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-slate-300 mb-1">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
             Bio <span className="text-slate-500">({bio.length}/{BIO_MAX_LENGTH})</span>
           </label>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX_LENGTH))}
             placeholder="Tell us about yourself..."
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-16"
+            className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-16"
             data-testid="bio-input"
           />
         </div>
 
         {/* Skills */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-slate-300 mb-1">Skills</label>
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Skills</label>
           <div className="flex gap-2 flex-wrap" data-testid="skill-tags">
             {LOBBY_SKILL_TAGS.map((skill) => (
               <button
@@ -117,7 +119,7 @@ function LobbyScreenInner({ onJoin }: LobbyScreenProps) {
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                   skills.includes(skill)
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
                 }`}
                 data-testid={`skill-${skill}`}
               >
@@ -130,7 +132,7 @@ function LobbyScreenInner({ onJoin }: LobbyScreenProps) {
         {/* Budget Sliders */}
         <div className="mb-4 grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
               Daily Token Limit: {dailyTokenLimit.toLocaleString()}
             </label>
             <input
@@ -145,7 +147,7 @@ function LobbyScreenInner({ onJoin }: LobbyScreenProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
               Session Token Limit: {sessionTokenLimit.toLocaleString()}
             </label>
             <input
@@ -163,11 +165,11 @@ function LobbyScreenInner({ onJoin }: LobbyScreenProps) {
 
         {/* Permission Preset */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-slate-300 mb-1">Permission Mode</label>
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Permission Mode</label>
           <select
             value={permissionPreset}
             onChange={(e) => setPermissionPreset(e.target.value as PermissionPreset)}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             data-testid="permission-select"
           >
             <option value="open">Open — Accept all dialogue requests</option>

@@ -69,16 +69,16 @@ export function ActivityFeed() {
     <div className="absolute bottom-3 left-3 z-10 w-72">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-gray-900/80 backdrop-blur text-white px-3 py-2 rounded-t-lg text-sm font-medium flex justify-between items-center hover:bg-gray-800/80 transition-colors"
+        className="w-full panel-glass px-3 py-2 rounded-t-lg text-sm font-medium flex justify-between items-center hover:opacity-90 transition-colors"
       >
         <span>Activity Feed</span>
-        <span className="text-gray-400 text-xs">
+        <span className="opacity-50 text-xs">
           {events.length} events {isOpen ? '\u25BC' : '\u25B2'}
         </span>
       </button>
 
       {isOpen && (
-        <div className="bg-gray-900/80 backdrop-blur rounded-b-lg max-h-60 overflow-y-auto divide-y divide-gray-800/50">
+        <div className="panel-glass rounded-b-lg max-h-60 overflow-y-auto divide-y divide-gray-300/20 dark:divide-gray-700/50 border-t-0">
           {events.length === 0 ? (
             <div className="text-gray-500 text-sm p-3 text-center">No events yet</div>
           ) : (

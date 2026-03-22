@@ -7,6 +7,7 @@ import { TaskPanel } from './panels/TaskPanel';
 import { TeamPanel } from './panels/TeamPanel';
 import { BudgetBar } from './panels/BudgetBar';
 import { SoundToggle } from './components/SoundToggle';
+import { ThemeToggle } from './components/ThemeToggle';
 import { LobbyScreen } from './components/LobbyScreen';
 import { PermissionRequestOverlay } from './components/PermissionRequestOverlay';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -92,6 +93,7 @@ export function App() {
       <TeamPanel />
       <BudgetBar />
       <SoundToggle />
+      <ThemeToggle />
       <PermissionRequestOverlay />
     </div>
   );

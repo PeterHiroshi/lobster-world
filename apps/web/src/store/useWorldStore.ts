@@ -16,7 +16,7 @@ import { createUiSlice } from './slices/uiSlice';
 import type { UiSlice } from './slices/uiSlice';
 
 // Re-export types for backward compatibility
-export type { ConnectionStatus, WorldStats } from './slices/uiSlice';
+export type { ConnectionStatus, WorldStats, Theme } from './slices/uiSlice';
 export type { DialogueMessageEntry, ActiveDialogue } from './slices/dialogueSlice';
 export type { LobsterStats, EffectEntry, EntranceAnimation } from './slices/lobsterSlice';
 export type { TeamAgent, TaskCardAnimation } from './slices/taskSlice';

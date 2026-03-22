@@ -8,7 +8,7 @@ export const TeamPanel = memo(function TeamPanel() {
   const lobsters = useWorldStore((s) => s.lobsters);
 
   return (
-    <div className="absolute bottom-3 left-3 z-10 w-64 bg-gray-900/90 backdrop-blur rounded-lg p-3 text-white">
+    <div className="absolute bottom-3 left-3 z-10 w-64 panel-glass rounded-lg p-3">
       <h3 className="text-sm font-bold mb-2">Team</h3>
 
       {teamAgents.length === 0 ? (
