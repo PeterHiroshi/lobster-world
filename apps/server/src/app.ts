@@ -1,5 +1,9 @@
+import { existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
 import { WebSocketServer } from 'ws';
 import {
   SERVER_PORT,
@@ -105,6 +109,25 @@ export async function createApp(deps?: Partial<AppDeps>): Promise<App> {
   // --- Fastify server ---
   const server = Fastify({ logger: true });
   await server.register(cors, { origin: CORS_ORIGINS });
+
+  // Health check endpoint
+  server.get('/health', async () => ({ status: 'ok', uptime: process.uptime() }));
+
+  // Serve static web build in production
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+  const webDistPath = resolve(currentDir, '../../web/dist');
+  if (existsSync(webDistPath)) {
+    await server.register(fastifyStatic, {
+      root: webDistPath,
+      prefix: '/',
+      wildcard: false,
+    });
+    // SPA fallback: serve index.html for non-API/WS routes
+    server.setNotFoundHandler(async (_req, reply) => {
+      return reply.sendFile('index.html');
+    });
+  }
+
   registerRoutes(server, {
     registry: d.registry,
     scene: d.scene,
