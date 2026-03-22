@@ -78,7 +78,7 @@ export const LobsterDetailCard = memo(function LobsterDetailCard() {
 
           {/* Skills */}
           <div className="flex flex-wrap gap-1 mb-2">
-            {lobster.profile.skills.map((skill) => (
+            {lobster.profile.skills.map((skill: string) => (
               <span
                 key={skill}
                 className="text-xs bg-gray-700/60 text-gray-300 px-1.5 py-0.5 rounded"

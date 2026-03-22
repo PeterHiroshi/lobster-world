@@ -48,10 +48,18 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
     return dialogue.getActiveSessions();
   });
 
-  app.get('/api/audit', async (request) => {
-    const { count } = request.query as { count?: string };
-    const n = count ? Math.max(1, Math.min(1000, Number(count))) : 100;
-    return auditLog.getRecent(Number.isNaN(n) ? 100 : n);
+  app.get('/api/audit', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          count: { type: 'integer', minimum: 1, maximum: 1000, default: 100 },
+        },
+      },
+    },
+  }, async (request) => {
+    const { count } = request.query as { count?: number };
+    return auditLog.getRecent(count ?? 100);
   });
 
   // --- Agent/Workforce routes ---
@@ -69,11 +77,19 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
     return agent;
   });
 
-  app.post('/api/agents', async (request, reply) => {
+  app.post('/api/agents', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['agentId', 'roleId'],
+        properties: {
+          agentId: { type: 'string', minLength: 1 },
+          roleId: { type: 'string', minLength: 1 },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { agentId, roleId } = request.body as { agentId: string; roleId: string };
-    if (!agentId || !roleId) {
-      return reply.status(400).send({ error: 'agentId and roleId are required' });
-    }
     const agent = workforce.registerAgent(agentId, roleId);
     if (!agent) {
       return reply.status(400).send({ error: 'Invalid roleId' });
@@ -199,9 +215,17 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
 
   // --- Event routes ---
 
-  app.get('/api/events', async (request) => {
-    const { count } = request.query as { count?: string };
-    const n = count ? Math.max(1, Math.min(100, Number(count))) : 20;
-    return events.getRecent(Number.isNaN(n) ? 20 : n);
+  app.get('/api/events', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          count: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+        },
+      },
+    },
+  }, async (request) => {
+    const { count } = request.query as { count?: number };
+    return events.getRecent(count ?? 20);
   });
 }
