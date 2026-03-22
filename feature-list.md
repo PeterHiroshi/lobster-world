@@ -56,8 +56,8 @@
 | W12 | Particle effects (sparkles on dialogue start, confetti on join) | 🟢 | feature/phase1-polish | Confetti (20 pieces), sparkles (drei), ambient dust |
 | W13 | Interactive lobster click (show detail card with profile, skills, stats) | 🟢 | feature/phase1-polish | Detail card via drei Html, glow ring, click-outside dismiss |
 | W14 | Scene transitions (lobby entrance animation on join) | 🟢 | feature/phase1-polish | Walk from entrance to desk, scale-up, confetti burst |
-| W15 | Responsive mobile layout + touch controls | 🔴 | — | — |
-| W16 | Dark mode + theme toggle | 🔴 | — | — |
+| W15 | Responsive mobile layout + touch controls | 🟢 | feature/deliverable-polish | Bottom sheets, MobileNav, useMediaQuery, safe-area |
+| W16 | Dark mode + theme toggle | 🟢 | feature/deliverable-polish | localStorage persist, glass-morphism, theme-aware 3D scene |
 | W17 | Dialogue viewer panel (real-time message stream between lobsters) | 🟢 | feature/phase1-polish | Expandable cards, typing indicator, colored speakers, auto-scroll |
 | W18 | Sound effects (ambient office, typing clicks, chat notification) | 🟢 | feature/phase1-polish | Web Audio API, procedural sounds, mute toggle |
 
@@ -143,3 +143,13 @@
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
 | I5 | Social Proxy ↔ Server E2E (real auth, dialogue, budget) | 🟢 | feature/phase2b-part2 | DemoSocialProxy + full auth/lobby/dialogue/budget flow |
+
+## Phase 2c — Deliverable Polish
+
+### Deployment
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| D1 | Docker deployment (multi-stage build, health check, static serving) | 🟢 | feature/deliverable-polish | Dockerfile + docker-compose, @fastify/static, /health endpoint |
+| D2 | Enhanced demo experience (guided tour, 5 NPCs, auto-start) | 🟢 | feature/deliverable-polish | DemoTour 4-step overlay, 5 NPC lobsters, keyboard nav |
+| D3 | Production README (badges, architecture, quickstart) | 🟢 | feature/deliverable-polish | Mermaid diagram, Docker quickstart, feature list |
+| D4 | Landing page mode (hero, feature cards, demo CTA) | 🟢 | feature/deliverable-polish | MiniLobster 3D canvas, landing → lobby → scene flow |
