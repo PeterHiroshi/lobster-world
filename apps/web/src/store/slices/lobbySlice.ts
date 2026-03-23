@@ -29,7 +29,7 @@ export interface LobbySlice {
 }
 
 export const createLobbySlice: StateCreator<LobbySlice, [], [], LobbySlice> = (set, get) => ({
-  lobbyState: { phase: 'lobby', profile: null, sessionToken: null, error: null },
+  lobbyState: { phase: 'landing', profile: null, sessionToken: null, error: null },
   permissionRequests: [],
   budgetStatus: null,
 

@@ -7,9 +7,14 @@ import { TaskPanel } from './panels/TaskPanel';
 import { TeamPanel } from './panels/TeamPanel';
 import { BudgetBar } from './panels/BudgetBar';
 import { SoundToggle } from './components/SoundToggle';
+import { ThemeToggle } from './components/ThemeToggle';
+import { MobileNav } from './components/MobileNav';
 import { LobbyScreen } from './components/LobbyScreen';
+import { LandingPage } from './components/LandingPage';
 import { PermissionRequestOverlay } from './components/PermissionRequestOverlay';
+import { DemoTour } from './components/DemoTour';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { useIsMobile } from './hooks/useMediaQuery';
 
 const Scene = lazy(() => import('./components/Scene').then((m) => ({ default: m.Scene })));
 import { useWebSocket } from './hooks/useWebSocket';
@@ -21,6 +26,7 @@ import type { LobbyProfile } from '@lobster-world/protocol';
 
 export function App() {
   useWebSocket();
+  const isMobile = useIsMobile();
 
   const phase = useWorldStore((s) => s.lobbyState.phase);
   const setLobbyPhase = useWorldStore((s) => s.setLobbyPhase);
@@ -30,6 +36,7 @@ export function App() {
   const addPermissionRequest = useWorldStore((s) => s.addPermissionRequest);
 
   const proxyRef = useRef<DemoSocialProxy | null>(null);
+  const demModeRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -38,7 +45,7 @@ export function App() {
     };
   }, []);
 
-  const handleJoin = useCallback(
+  const connectProxy = useCallback(
     (profile: LobbyProfile) => {
       setLobbyPhase('joining');
 
@@ -56,15 +63,9 @@ export function App() {
         onPermissionRequest: (request) => {
           addPermissionRequest(request);
         },
-        onDialogueInvitation: () => {
-          // Handled via viewer WS for now
-        },
-        onDialogueMessage: () => {
-          // Handled via viewer WS for now
-        },
-        onDialogueEnded: () => {
-          // Handled via viewer WS for now
-        },
+        onDialogueInvitation: () => {},
+        onDialogueMessage: () => {},
+        onDialogueEnded: () => {},
       });
 
       proxyRef.current = proxy;
@@ -72,6 +73,34 @@ export function App() {
     },
     [setLobbyPhase, setLobbyError, setSessionToken, setBudgetStatus, addPermissionRequest],
   );
+
+  const handleEnterWorld = useCallback(() => {
+    demModeRef.current = false;
+    setLobbyPhase('lobby');
+  }, [setLobbyPhase]);
+
+  const handleWatchDemo = useCallback(() => {
+    demModeRef.current = true;
+    const demoProfile: LobbyProfile = {
+      displayName: 'Demo Visitor',
+      color: '#6366f1',
+      bio: 'Watching the demo',
+      skills: ['coding'],
+      dailyTokenLimit: 50000,
+      sessionTokenLimit: 5000,
+      permissionPreset: 'open',
+    };
+    connectProxy(demoProfile);
+  }, [connectProxy]);
+
+  const handleJoin = useCallback(
+    (profile: LobbyProfile) => connectProxy(profile),
+    [connectProxy],
+  );
+
+  if (phase === 'landing') {
+    return <LandingPage onEnter={handleEnterWorld} onDemo={handleWatchDemo} />;
+  }
 
   if (phase !== 'joined') {
     return <LobbyScreen onJoin={handleJoin} />;
@@ -92,7 +121,10 @@ export function App() {
       <TeamPanel />
       <BudgetBar />
       <SoundToggle />
+      <ThemeToggle />
       <PermissionRequestOverlay />
+      <DemoTour />
+      {isMobile && <MobileNav />}
     </div>
   );
 }

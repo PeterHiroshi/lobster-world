@@ -1,6 +1,6 @@
 // --- Lobby UI Types (Phase 2b Part 2) ---
 
-export type LobbyPhase = 'lobby' | 'joining' | 'joined';
+export type LobbyPhase = 'landing' | 'lobby' | 'joining' | 'joined';
 
 export type SkillTag = 'coding' | 'design' | 'devops' | 'testing' | 'writing' | 'research';
 

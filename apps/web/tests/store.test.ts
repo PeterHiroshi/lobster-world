@@ -329,9 +329,9 @@ describe('useWorldStore', () => {
 
   // --- Phase 2b Part 2: Lobby State ---
 
-  it('starts with lobby phase', () => {
+  it('starts with landing phase', () => {
     const state = useWorldStore.getState();
-    expect(state.lobbyState.phase).toBe('lobby');
+    expect(state.lobbyState.phase).toBe('landing');
     expect(state.lobbyState.profile).toBeNull();
     expect(state.lobbyState.sessionToken).toBeNull();
     expect(state.lobbyState.error).toBeNull();
