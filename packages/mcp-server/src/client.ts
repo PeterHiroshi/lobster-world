@@ -188,7 +188,9 @@ export class PlatformClient {
   // --- Tasks ---
 
   async getTasks(filters?: TaskFilters): Promise<Task[]> {
-    const query = filters ? this.buildQuery(filters) : '';
+    const query = filters
+      ? this.buildQuery({ status: filters.status, assignee: filters.assignee, project: filters.project })
+      : '';
     return this.restGet<Task[]>(`/api/tasks${query}`);
   }
 
@@ -235,7 +237,9 @@ export class PlatformClient {
   // --- Documents ---
 
   async getDocs(filters?: DocFilters): Promise<MemoryEntry[]> {
-    const query = filters ? this.buildQuery(filters) : '';
+    const query = filters
+      ? this.buildQuery({ category: filters.category, tag: filters.tag })
+      : '';
     return this.restGet<MemoryEntry[]>(`/api/docs${query}`);
   }
 

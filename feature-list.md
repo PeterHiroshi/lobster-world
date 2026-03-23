@@ -153,3 +153,35 @@
 | D2 | Enhanced demo experience (guided tour, 5 NPCs, auto-start) | 🟢 | feature/deliverable-polish | DemoTour 4-step overlay, 5 NPC lobsters, keyboard nav |
 | D3 | Production README (badges, architecture, quickstart) | 🟢 | feature/deliverable-polish | Mermaid diagram, Docker quickstart, feature list |
 | D4 | Landing page mode (hero, feature cards, demo CTA) | 🟢 | feature/deliverable-polish | MiniLobster 3D canvas, landing → lobby → scene flow |
+## Phase 4 — MCP Server (Universal Agent Access)
+
+### Protocol (packages/protocol)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| P9 | MemoryEntry + CodeSubmission types | 🟢 | feature/mcp-server | Collective memory, code review types + constants |
+
+### Server Enhancements (apps/server)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| S22 | DocManager (in-memory collective memory CRUD) | 🟢 | feature/mcp-server | Create, read, update, delete, search, filter by category/tag, 16 tests |
+| S23 | CodeReviewManager (code submission + review workflow) | 🟢 | feature/mcp-server | Submit, review, approve/reject/changes_requested, 14 tests |
+| S24 | REST endpoints — docs, code review, task assign, meeting delete | 🟢 | feature/mcp-server | 12 new endpoints, 24 tests |
+
+### MCP Server (packages/mcp-server)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| M1 | Package scaffold (constants, vitest, CLI entry) | 🟢 | feature/mcp-server | @modelcontextprotocol/sdk, zod, tweetnacl, 12 tests |
+| M2 | PlatformClient (REST client for all server APIs) | 🟢 | feature/mcp-server | GET/POST/PUT/DELETE for tasks, meetings, docs, code, 23 tests |
+| M3 | MCP Tools — world (status, join, leave, status update) | 🟢 | feature/mcp-server | 4 tools, 6 tests |
+| M4 | MCP Tools — tasks (list, create, update, assign) | 🟢 | feature/mcp-server | 4 tools, 7 tests |
+| M5 | MCP Tools — chat (send, broadcast, meeting start/end) | 🟢 | feature/mcp-server | 4 tools, 6 tests |
+| M6 | MCP Tools — docs (read, write) | 🟢 | feature/mcp-server | 2 tools, 6 tests |
+| M7 | MCP Tools — code (submit, review) | 🟢 | feature/mcp-server | 2 tools, 4 tests |
+| M8 | MCP Resources (scene, lobsters, tasks, meetings, memory) | 🟢 | feature/mcp-server | 5 resources, 7 tests |
+| M9 | Server entry point + stdio transport | 🟢 | feature/mcp-server | McpServer registration, StdioServerTransport, 3 tests |
+| M10 | Integration tests (full flow against real server) | 🟢 | feature/mcp-server | 14 tests: task lifecycle, chat, docs, code review, resources |
+
+### Integration
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| I6 | MCP Server ↔ Platform Server E2E | 🟢 | feature/mcp-server | 88 MCP tests + 322 server tests, all passing |

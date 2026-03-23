@@ -1,3 +1,4 @@
+import type { TaskStatus } from '@lobster-world/protocol';
 import type { PlatformClient } from '../client.js';
 import type { ToolDefinition } from './world.js';
 
@@ -23,7 +24,7 @@ export function createTaskTools(client: PlatformClient): ToolDefinition[] {
       handler: async (args) => {
         try {
           const tasks = await client.getTasks({
-            status: args.status as string | undefined,
+            status: args.status as TaskStatus | undefined,
             assignee: args.assignee as string | undefined,
           });
           return { content: JSON.stringify(tasks, null, 2) };
