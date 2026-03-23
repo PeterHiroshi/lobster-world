@@ -5,6 +5,8 @@ export type Theme = 'dark' | 'light';
 
 export interface WorldStats {
   lobsterCount: number;
+  realLobsterCount: number;
+  demoLobsterCount: number;
   activeDialogues: number;
   totalMessages: number;
 }
@@ -53,7 +55,7 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) 
 
   return {
     connectionStatus: 'disconnected',
-    stats: { lobsterCount: 0, activeDialogues: 0, totalMessages: 0 },
+    stats: { lobsterCount: 0, realLobsterCount: 0, demoLobsterCount: 0, activeDialogues: 0, totalMessages: 0 },
     focusLobsterId: null,
     selectedLobsterId: null,
     selectedTaskId: null,
