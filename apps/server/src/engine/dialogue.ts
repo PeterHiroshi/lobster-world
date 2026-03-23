@@ -46,6 +46,20 @@ export class DialogueRouter {
     return session;
   }
 
+  markEncrypted(sessionId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    if (!session || session.status !== 'active') {
+      return false;
+    }
+    session.encrypted = true;
+    return true;
+  }
+
+  isEncrypted(sessionId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    return session?.encrypted === true;
+  }
+
   getSession(sessionId: string): DialogueSession | undefined {
     return this.sessions.get(sessionId);
   }
@@ -58,6 +72,36 @@ export class DialogueRouter {
     return [...this.sessions.values()].filter(
       (s) => s.status === 'active' && s.participants.includes(lobsterId),
     );
+  }
+
+  addEncryptedMessage(
+    sessionId: string,
+    fromId: string,
+    ciphertextSize: number,
+  ): DialogueMessage | undefined {
+    const session = this.sessions.get(sessionId);
+    if (!session || session.status !== 'active') {
+      return undefined;
+    }
+
+    session.turnsUsed += 1;
+    session.tokensUsed += Math.ceil(ciphertextSize * TOKEN_ESTIMATION_FACTOR);
+    session.lastActivityAt = Date.now();
+
+    const message: DialogueMessage = {
+      sessionId,
+      fromId,
+      content: '[encrypted]',
+      timestamp: session.lastActivityAt,
+      turnNumber: session.turnsUsed,
+    };
+
+    const sessionMessages = this.messages.get(sessionId);
+    if (sessionMessages) {
+      sessionMessages.push(message);
+    }
+
+    return message;
   }
 
   addMessage(
