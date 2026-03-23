@@ -36,6 +36,14 @@ import { EventProcessor } from './engine/events.js';
 import { DocManager } from './engine/docs.js';
 import { CodeReviewManager } from './engine/code-review.js';
 import { A2ARouter } from './engine/a2a-router.js';
+import type { DatabaseConnection } from './db/connection.js';
+import { createDatabaseConnection } from './db/connection.js';
+import { PgTaskRepo } from './db/repositories/task-repo.js';
+import { PgDocRepo } from './db/repositories/doc-repo.js';
+import { PgCodeReviewRepo } from './db/repositories/code-review-repo.js';
+import { PgA2ARepo } from './db/repositories/a2a-repo.js';
+import { PgAuditRepo } from './db/repositories/audit-repo.js';
+import { PgCommsRepo } from './db/repositories/comms-repo.js';
 
 export interface AppDeps {
   connections: ConnectionManager;
@@ -80,14 +88,41 @@ export function createDefaultDeps(): AppDeps {
   };
 }
 
+export async function createPgDeps(databaseUrl: string): Promise<{ deps: AppDeps; dbConnection: DatabaseConnection }> {
+  const dbConnection = await createDatabaseConnection(databaseUrl);
+  const { db } = dbConnection;
+  const scene = new SceneEngine();
+  const deps: AppDeps = {
+    connections: new ConnectionManager(),
+    registry: new LobsterRegistry(),
+    scene,
+    dialogue: new DialogueRouter(),
+    circuitBreaker: new CircuitBreaker(),
+    auditLog: new AuditLog(new PgAuditRepo(db)),
+    authManager: new AuthManager(),
+    lobbyManager: new LobbyManager(scene.getScene()),
+    consentManager: new ConsentManager(),
+    budgetEnforcer: new BudgetEnforcer(),
+    workforce: new WorkforceManager(),
+    tasks: new TaskEngine(new PgTaskRepo(db)),
+    comms: new CommsEngine(new PgCommsRepo(db)),
+    events: new EventProcessor(),
+    docs: new DocManager(new PgDocRepo(db)),
+    codeReview: new CodeReviewManager(new PgCodeReviewRepo(db)),
+    a2aRouter: new A2ARouter(new PgA2ARepo(db)),
+  };
+  return { deps, dbConnection };
+}
+
 export interface App {
   server: FastifyInstance;
   deps: AppDeps;
+  dbConnection?: DatabaseConnection;
   start: () => Promise<void>;
   shutdown: () => Promise<void>;
 }
 
-export async function createApp(deps?: Partial<AppDeps>): Promise<App> {
+export async function createApp(deps?: Partial<AppDeps>, dbConnection?: DatabaseConnection): Promise<App> {
   const d: AppDeps = { ...createDefaultDeps(), ...deps };
 
   // --- Handlers ---
@@ -225,7 +260,10 @@ export async function createApp(deps?: Partial<AppDeps>): Promise<App> {
     socialWss.close();
     d.consentManager.dispose();
     await server.close();
+    if (dbConnection) {
+      await dbConnection.close();
+    }
   }
 
-  return { server, deps: d, start, shutdown };
+  return { server, deps: d, dbConnection, start, shutdown };
 }

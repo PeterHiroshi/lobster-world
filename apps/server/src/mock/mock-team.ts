@@ -87,7 +87,7 @@ const TEAM_MEMBERS: TeamMember[] = [
 
 interface ScenarioStep {
   description: string;
-  execute: (ctx: ScenarioContext) => void;
+  execute: (ctx: ScenarioContext) => void | Promise<void>;
 }
 
 interface ScenarioContext {
@@ -105,7 +105,7 @@ function createProjectScenario(): ScenarioStep[] {
     // Step 1: PM creates tasks
     {
       description: 'PM creates project tasks',
-      execute: (ctx) => {
+      execute: async (ctx) => {
         const taskDefs: Array<{ title: string; desc: string; priority: TaskPriority }> = [
           { title: 'Design API schema', desc: 'Define REST endpoints and data models', priority: 'high' },
           { title: 'Build auth service', desc: 'Implement JWT auth with refresh tokens', priority: 'high' },
@@ -115,7 +115,7 @@ function createProjectScenario(): ScenarioStep[] {
         ];
 
         for (const def of taskDefs) {
-          const task = ctx.tasks.createTask({
+          const task = await ctx.tasks.createTask({
             projectId: 'proj-1',
             title: def.title,
             description: def.desc,
@@ -125,7 +125,7 @@ function createProjectScenario(): ScenarioStep[] {
           ctx.broadcastRender({ type: 'task_update', task });
         }
 
-        ctx.comms.broadcast('agent-alice', 'Created 5 tasks for the new project. Let\'s get started!');
+        await ctx.comms.broadcast('agent-alice', 'Created 5 tasks for the new project. Let\'s get started!');
         moveAgent(ctx, 'agent-alice', 'walking', 'Creating project tasks');
         ctx.events.emit('internal', 'tasks_created', { count: 5, by: 'agent-alice' });
       },
@@ -133,15 +133,15 @@ function createProjectScenario(): ScenarioStep[] {
     // Step 2: Tech Lead reviews and calls standup
     {
       description: 'Tech Lead calls standup meeting',
-      execute: (ctx) => {
-        const meeting = ctx.comms.createMeeting('Morning Standup', [
+      execute: async (ctx) => {
+        const meeting = await ctx.comms.createMeeting('Morning Standup', [
           'agent-alice', 'agent-bob', 'agent-carol', 'agent-dave', 'agent-eve',
         ]);
         ctx.broadcastRender({ type: 'meeting_start', meeting });
 
-        ctx.comms.addMeetingMessage(meeting.id, 'agent-bob', 'Good morning team! Let\'s review the new tasks.');
-        ctx.comms.addMeetingMessage(meeting.id, 'agent-alice', 'I\'ve prioritized the API schema and auth service as high priority.');
-        ctx.comms.addMeetingMessage(meeting.id, 'agent-bob', 'Carol, can you take the API schema? Dave, start on the dashboard.');
+        await ctx.comms.addMeetingMessage(meeting.id, 'agent-bob', 'Good morning team! Let\'s review the new tasks.');
+        await ctx.comms.addMeetingMessage(meeting.id, 'agent-alice', 'I\'ve prioritized the API schema and auth service as high priority.');
+        await ctx.comms.addMeetingMessage(meeting.id, 'agent-bob', 'Carol, can you take the API schema? Dave, start on the dashboard.');
 
         moveAgent(ctx, 'agent-bob', 'chatting', 'Running standup');
         setAllMood(ctx, 'focused');
@@ -150,8 +150,8 @@ function createProjectScenario(): ScenarioStep[] {
     // Step 3: Tech Lead assigns tasks
     {
       description: 'Tech Lead assigns tasks to team',
-      execute: (ctx) => {
-        const allTasks = ctx.tasks.getAllTasks();
+      execute: async (ctx) => {
+        const allTasks = await ctx.tasks.getAllTasks();
         const assignments: Record<string, string> = {
           'Design API schema': 'agent-carol',
           'Build auth service': 'agent-carol',
@@ -163,7 +163,7 @@ function createProjectScenario(): ScenarioStep[] {
         for (const task of allTasks) {
           const assignee = assignments[task.title];
           if (assignee) {
-            const updated = ctx.tasks.assignTask(task.id, assignee);
+            const updated = await ctx.tasks.assignTask(task.id, assignee);
             if (updated) {
               ctx.workforce.incrementWorkload(assignee);
               ctx.broadcastRender({
@@ -178,17 +178,17 @@ function createProjectScenario(): ScenarioStep[] {
           }
         }
 
-        ctx.comms.sendMessage('agent-bob', 'all', 'broadcast', 'Tasks assigned! Let\'s build something great.');
+        await ctx.comms.sendMessage('agent-bob', 'all', 'broadcast', 'Tasks assigned! Let\'s build something great.');
       },
     },
     // Step 4: End standup meeting
     {
       description: 'End standup, devs start working',
-      execute: (ctx) => {
-        const meetings = ctx.comms.getActiveMeetings();
+      execute: async (ctx) => {
+        const meetings = await ctx.comms.getActiveMeetings();
         if (meetings.length > 0) {
-          ctx.comms.addDecision(meetings[0].id, 'Sprint goal: Complete API schema and start auth service');
-          ctx.comms.endMeeting(meetings[0].id);
+          await ctx.comms.addDecision(meetings[0].id, 'Sprint goal: Complete API schema and start auth service');
+          await ctx.comms.endMeeting(meetings[0].id);
           ctx.broadcastRender({ type: 'meeting_end', meetingId: meetings[0].id });
         }
 
@@ -201,21 +201,17 @@ function createProjectScenario(): ScenarioStep[] {
     // Step 5: Carol finishes API schema, moves to review
     {
       description: 'Backend dev finishes API schema',
-      execute: (ctx) => {
-        const task = ctx.tasks.getAllTasks().find((t) => t.title === 'Design API schema');
+      execute: async (ctx) => {
+        const allTasks = await ctx.tasks.getAllTasks();
+        const task = allTasks.find((t) => t.title === 'Design API schema');
         if (task) {
-          const updated = ctx.tasks.transitionStatus(task.id, 'review');
+          const updated = await ctx.tasks.transitionStatus(task.id, 'review');
           if (updated) {
-            ctx.broadcastRender({
-              type: 'task_card_move',
-              taskId: task.id,
-              fromStatus: 'doing',
-              toStatus: 'review',
-            });
+            ctx.broadcastRender({ type: 'task_card_move', taskId: task.id, fromStatus: 'doing', toStatus: 'review' });
             ctx.broadcastRender({ type: 'task_update', task: updated });
           }
         }
-        ctx.comms.sendMessage('agent-carol', 'agent-bob', 'review', 'API schema ready for review!');
+        await ctx.comms.sendMessage('agent-carol', 'agent-bob', 'review', 'API schema ready for review!');
         ctx.events.emit('github', 'pr_created', { title: 'feat: API schema design', author: 'Carol' });
         moveAgent(ctx, 'agent-carol', 'waving', 'API schema done!');
       },
@@ -223,51 +219,44 @@ function createProjectScenario(): ScenarioStep[] {
     // Step 6: Bob reviews, sends feedback
     {
       description: 'Tech Lead reviews API schema',
-      execute: (ctx) => {
+      execute: async (ctx) => {
         moveAgent(ctx, 'agent-bob', 'thinking', 'Reviewing API schema PR');
-        ctx.comms.sendMessage('agent-bob', 'agent-carol', 'review', 'Looks good! Just add pagination to the list endpoints.');
+        await ctx.comms.sendMessage('agent-bob', 'agent-carol', 'review', 'Looks good! Just add pagination to the list endpoints.');
         ctx.events.emit('github', 'pr_review', { title: 'feat: API schema', reviewer: 'Bob', status: 'approved' });
       },
     },
     // Step 7: API schema done, Dave makes progress
     {
       description: 'API schema approved, dashboard progressing',
-      execute: (ctx) => {
-        const apiTask = ctx.tasks.getAllTasks().find((t) => t.title === 'Design API schema');
+      execute: async (ctx) => {
+        const allTasks = await ctx.tasks.getAllTasks();
+        const apiTask = allTasks.find((t) => t.title === 'Design API schema');
         if (apiTask) {
-          const updated = ctx.tasks.transitionStatus(apiTask.id, 'done');
+          const updated = await ctx.tasks.transitionStatus(apiTask.id, 'done');
           if (updated) {
             ctx.workforce.decrementWorkload('agent-carol');
-            ctx.broadcastRender({
-              type: 'task_card_move',
-              taskId: apiTask.id,
-              fromStatus: 'review',
-              toStatus: 'done',
-            });
+            ctx.broadcastRender({ type: 'task_card_move', taskId: apiTask.id, fromStatus: 'review', toStatus: 'done' });
             ctx.broadcastRender({ type: 'task_update', task: updated });
-            ctx.broadcastRender({
-              type: 'effect',
-              position: { x: 0, y: 2, z: -8 },
-              effectType: 'confetti',
-            });
+            ctx.broadcastRender({ type: 'effect', position: { x: 0, y: 2, z: -8 }, effectType: 'confetti' });
           }
         }
         moveAgent(ctx, 'agent-carol', 'working', 'Starting auth service');
         moveAgent(ctx, 'agent-dave', 'working', 'Building chart components');
-        ctx.comms.sendMessage('agent-dave', 'agent-carol', 'direct', 'Hey Carol, what format should the API responses be?');
-        ctx.comms.sendMessage('agent-carol', 'agent-dave', 'direct', 'JSON with camelCase keys. I\'ll share the schema doc.');
+        await ctx.comms.sendMessage('agent-dave', 'agent-carol', 'direct', 'Hey Carol, what format should the API responses be?');
+        await ctx.comms.sendMessage('agent-carol', 'agent-dave', 'direct', 'JSON with camelCase keys. I\'ll share the schema doc.');
       },
     },
     // Step 8: CI pipeline done, eve starts testing
     {
       description: 'CI pipeline complete, QA begins testing',
-      execute: (ctx) => {
-        const ciTask = ctx.tasks.getAllTasks().find((t) => t.title === 'Setup CI pipeline');
+      execute: async (ctx) => {
+        const allTasks = await ctx.tasks.getAllTasks();
+        const ciTask = allTasks.find((t) => t.title === 'Setup CI pipeline');
         if (ciTask) {
-          const reviewed = ctx.tasks.transitionStatus(ciTask.id, 'review');
+          const reviewed = await ctx.tasks.transitionStatus(ciTask.id, 'review');
           if (reviewed) {
             ctx.broadcastRender({ type: 'task_card_move', taskId: ciTask.id, fromStatus: 'doing', toStatus: 'review' });
-            const done = ctx.tasks.transitionStatus(ciTask.id, 'done');
+            const done = await ctx.tasks.transitionStatus(ciTask.id, 'done');
             if (done) {
               ctx.workforce.decrementWorkload('agent-bob');
               ctx.broadcastRender({ type: 'task_card_move', taskId: ciTask.id, fromStatus: 'review', toStatus: 'done' });
@@ -283,9 +272,9 @@ function createProjectScenario(): ScenarioStep[] {
     // Step 9: New issue comes in
     {
       description: 'External event: new bug report',
-      execute: (ctx) => {
+      execute: async (ctx) => {
         ctx.events.emit('github', 'new_issue', { title: 'Login fails on Safari', priority: 'urgent' });
-        const bugTask = ctx.tasks.createTask({
+        const bugTask = await ctx.tasks.createTask({
           projectId: 'proj-1',
           title: 'Fix Safari login bug',
           description: 'Users report login failing on Safari 17',
@@ -293,41 +282,43 @@ function createProjectScenario(): ScenarioStep[] {
           createdBy: 'agent-alice',
         });
         ctx.broadcastRender({ type: 'task_update', task: bugTask });
-        ctx.comms.broadcast('agent-alice', 'Urgent bug: Login fails on Safari. Eve, can you reproduce?');
+        await ctx.comms.broadcast('agent-alice', 'Urgent bug: Login fails on Safari. Eve, can you reproduce?');
         moveAgent(ctx, 'agent-alice', 'thinking', 'Triaging urgent bug');
       },
     },
     // Step 10: Eve investigates bug
     {
       description: 'QA investigates Safari bug',
-      execute: (ctx) => {
-        const bugTask = ctx.tasks.getAllTasks().find((t) => t.title === 'Fix Safari login bug');
+      execute: async (ctx) => {
+        const allTasks = await ctx.tasks.getAllTasks();
+        const bugTask = allTasks.find((t) => t.title === 'Fix Safari login bug');
         if (bugTask) {
-          const assigned = ctx.tasks.assignTask(bugTask.id, 'agent-eve');
+          const assigned = await ctx.tasks.assignTask(bugTask.id, 'agent-eve');
           if (assigned) {
             ctx.workforce.incrementWorkload('agent-eve');
             ctx.broadcastRender({ type: 'task_card_move', taskId: bugTask.id, fromStatus: 'todo', toStatus: 'doing', assigneeId: 'agent-eve' });
             ctx.broadcastRender({ type: 'task_update', task: assigned });
           }
         }
-        ctx.comms.sendMessage('agent-eve', 'agent-carol', 'direct', 'Reproduced the Safari bug. It\'s a cookie SameSite issue.');
+        await ctx.comms.sendMessage('agent-eve', 'agent-carol', 'direct', 'Reproduced the Safari bug. It\'s a cookie SameSite issue.');
         moveAgent(ctx, 'agent-eve', 'working', 'Debugging Safari login');
       },
     },
     // Step 11: Dashboard to review, auth progressing
     {
       description: 'Dashboard ready for review',
-      execute: (ctx) => {
-        const dashTask = ctx.tasks.getAllTasks().find((t) => t.title === 'Create dashboard UI');
+      execute: async (ctx) => {
+        const allTasks = await ctx.tasks.getAllTasks();
+        const dashTask = allTasks.find((t) => t.title === 'Create dashboard UI');
         if (dashTask) {
-          const updated = ctx.tasks.transitionStatus(dashTask.id, 'review');
+          const updated = await ctx.tasks.transitionStatus(dashTask.id, 'review');
           if (updated) {
             ctx.broadcastRender({ type: 'task_card_move', taskId: dashTask.id, fromStatus: 'doing', toStatus: 'review' });
             ctx.broadcastRender({ type: 'task_update', task: updated });
           }
         }
         ctx.events.emit('github', 'pr_created', { title: 'feat: Dashboard UI', author: 'Dave' });
-        ctx.comms.sendMessage('agent-dave', 'agent-bob', 'review', 'Dashboard PR is up for review!');
+        await ctx.comms.sendMessage('agent-dave', 'agent-bob', 'review', 'Dashboard PR is up for review!');
         moveAgent(ctx, 'agent-dave', 'waving', 'Dashboard ready for review!');
         moveAgent(ctx, 'agent-carol', 'working', 'Implementing JWT refresh logic');
       },
@@ -335,13 +326,14 @@ function createProjectScenario(): ScenarioStep[] {
     // Step 12: Bug fixed, celebration
     {
       description: 'Safari bug fixed and deployed',
-      execute: (ctx) => {
-        const bugTask = ctx.tasks.getAllTasks().find((t) => t.title === 'Fix Safari login bug');
+      execute: async (ctx) => {
+        const allTasks = await ctx.tasks.getAllTasks();
+        const bugTask = allTasks.find((t) => t.title === 'Fix Safari login bug');
         if (bugTask) {
-          const reviewed = ctx.tasks.transitionStatus(bugTask.id, 'review');
+          const reviewed = await ctx.tasks.transitionStatus(bugTask.id, 'review');
           if (reviewed) {
             ctx.broadcastRender({ type: 'task_card_move', taskId: bugTask.id, fromStatus: 'doing', toStatus: 'review' });
-            const done = ctx.tasks.transitionStatus(bugTask.id, 'done');
+            const done = await ctx.tasks.transitionStatus(bugTask.id, 'done');
             if (done) {
               ctx.workforce.decrementWorkload('agent-eve');
               ctx.broadcastRender({ type: 'task_card_move', taskId: bugTask.id, fromStatus: 'review', toStatus: 'done' });
@@ -351,17 +343,18 @@ function createProjectScenario(): ScenarioStep[] {
           }
         }
         ctx.events.emit('github', 'deploy_success', { service: 'hotfix/safari-login', version: '1.0.1' });
-        ctx.comms.broadcast('agent-eve', 'Safari bug is fixed and deployed!');
+        await ctx.comms.broadcast('agent-eve', 'Safari bug is fixed and deployed!');
         setAllMood(ctx, 'happy');
       },
     },
     // Step 13: Dashboard approved
     {
       description: 'Dashboard approved, moving to done',
-      execute: (ctx) => {
-        const dashTask = ctx.tasks.getAllTasks().find((t) => t.title === 'Create dashboard UI');
+      execute: async (ctx) => {
+        const allTasks = await ctx.tasks.getAllTasks();
+        const dashTask = allTasks.find((t) => t.title === 'Create dashboard UI');
         if (dashTask && dashTask.status === 'review') {
-          const done = ctx.tasks.transitionStatus(dashTask.id, 'done');
+          const done = await ctx.tasks.transitionStatus(dashTask.id, 'done');
           if (done) {
             ctx.workforce.decrementWorkload('agent-dave');
             ctx.broadcastRender({ type: 'task_card_move', taskId: dashTask.id, fromStatus: 'review', toStatus: 'done' });
@@ -369,16 +362,17 @@ function createProjectScenario(): ScenarioStep[] {
           }
         }
         moveAgent(ctx, 'agent-dave', 'celebrating', 'Dashboard shipped!');
-        ctx.comms.sendMessage('agent-bob', 'agent-dave', 'direct', 'Great work on the dashboard!');
+        await ctx.comms.sendMessage('agent-bob', 'agent-dave', 'direct', 'Great work on the dashboard!');
       },
     },
     // Step 14: Auth service to review
     {
       description: 'Auth service ready for review',
-      execute: (ctx) => {
-        const authTask = ctx.tasks.getAllTasks().find((t) => t.title === 'Build auth service');
+      execute: async (ctx) => {
+        const allTasks = await ctx.tasks.getAllTasks();
+        const authTask = allTasks.find((t) => t.title === 'Build auth service');
         if (authTask) {
-          const updated = ctx.tasks.transitionStatus(authTask.id, 'review');
+          const updated = await ctx.tasks.transitionStatus(authTask.id, 'review');
           if (updated) {
             ctx.broadcastRender({ type: 'task_card_move', taskId: authTask.id, fromStatus: 'doing', toStatus: 'review' });
             ctx.broadcastRender({ type: 'task_update', task: updated });
@@ -391,13 +385,14 @@ function createProjectScenario(): ScenarioStep[] {
     // Step 15: Integration tests finishing up
     {
       description: 'Integration tests complete, sprint wrapping up',
-      execute: (ctx) => {
-        const testTask = ctx.tasks.getAllTasks().find((t) => t.title === 'Add integration tests');
+      execute: async (ctx) => {
+        const allTasks = await ctx.tasks.getAllTasks();
+        const testTask = allTasks.find((t) => t.title === 'Add integration tests');
         if (testTask) {
-          const reviewed = ctx.tasks.transitionStatus(testTask.id, 'review');
+          const reviewed = await ctx.tasks.transitionStatus(testTask.id, 'review');
           if (reviewed) {
             ctx.broadcastRender({ type: 'task_card_move', taskId: testTask.id, fromStatus: 'doing', toStatus: 'review' });
-            const done = ctx.tasks.transitionStatus(testTask.id, 'done');
+            const done = await ctx.tasks.transitionStatus(testTask.id, 'done');
             if (done) {
               ctx.workforce.decrementWorkload('agent-eve');
               ctx.broadcastRender({ type: 'task_card_move', taskId: testTask.id, fromStatus: 'review', toStatus: 'done' });
@@ -407,9 +402,9 @@ function createProjectScenario(): ScenarioStep[] {
         }
 
         // Auth also done
-        const authTask = ctx.tasks.getAllTasks().find((t) => t.title === 'Build auth service');
+        const authTask = allTasks.find((t) => t.title === 'Build auth service');
         if (authTask && authTask.status === 'review') {
-          const done = ctx.tasks.transitionStatus(authTask.id, 'done');
+          const done = await ctx.tasks.transitionStatus(authTask.id, 'done');
           if (done) {
             ctx.workforce.decrementWorkload('agent-carol');
             ctx.broadcastRender({ type: 'task_card_move', taskId: authTask.id, fromStatus: 'review', toStatus: 'done' });
@@ -417,7 +412,7 @@ function createProjectScenario(): ScenarioStep[] {
           }
         }
 
-        ctx.comms.broadcast('agent-alice', 'All sprint tasks complete! Great work team!');
+        await ctx.comms.broadcast('agent-alice', 'All sprint tasks complete! Great work team!');
         setAllMood(ctx, 'excited');
         ctx.broadcastRender({ type: 'effect', position: { x: 0, y: 2, z: 0 }, effectType: 'confetti' });
       },
@@ -568,7 +563,7 @@ export class TeamScenarioRunner {
     this.currentStep = 0;
 
     this.scenarioTimer = setTimeout(() => {
-      this.runNextStep();
+      this.runNextStep().catch((err) => console.error('[TeamScenario] Step error:', err));
     }, MOCK_SCENARIO_INITIAL_DELAY_MS);
   }
 
@@ -583,7 +578,7 @@ export class TeamScenarioRunner {
     this.agents.clear();
   }
 
-  private runNextStep(): void {
+  private async runNextStep(): Promise<void> {
     if (this.currentStep >= this.scenario.length) {
       // Loop the scenario
       this.currentStep = 0;
@@ -604,11 +599,11 @@ export class TeamScenarioRunner {
       broadcastRender: (event) => this.broadcastRender(event),
     };
 
-    step.execute(ctx);
+    await step.execute(ctx);
     this.currentStep++;
 
     this.scenarioTimer = setTimeout(() => {
-      this.runNextStep();
+      this.runNextStep().catch((err) => console.error('[TeamScenario] Step error:', err));
     }, MOCK_SCENARIO_TICK_MS);
   }
 
