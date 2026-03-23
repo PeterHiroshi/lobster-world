@@ -11,6 +11,7 @@ import type { Task, TaskStatus, Meeting, PlatformEvent } from './workforce.js';
 import type { PermissionRequest, BudgetStatus } from './lobby.js';
 import type { A2AMessage } from './a2a.js';
 import type { KeyExchangeRequest, KeyExchangeResponse, EncryptedDialogueMessage } from './crypto.js';
+import type { LobsterSkin } from './customization.js';
 
 // --- Protocol Events ---
 
@@ -70,4 +71,5 @@ export type RenderEvent =
   | { type: 'a2a_knowledge_share'; fromId: string; topic: string; recipients: string[] }
   | { type: 'a2a_collab_start'; sessionId: string; participants: string[]; topic: string }
   | { type: 'dialogue_encrypted'; sessionId: string; participants: string[] }
-  | { type: 'encrypted_dialogue_msg'; sessionId: string; fromId: string; fromName: string; fromColor: string; turnNumber: number };
+  | { type: 'encrypted_dialogue_msg'; sessionId: string; fromId: string; fromName: string; fromColor: string; turnNumber: number }
+  | { type: 'skin_update'; lobsterId: string; skin: LobsterSkin };
