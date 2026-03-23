@@ -178,6 +178,15 @@ export const BUDGET_WARNING_THRESHOLD = 0.8;
 export const BUDGET_CRITICAL_THRESHOLD = 0.95;
 export const DIALOGUE_CONSENT_TIMEOUT_MS = 30000;
 
+// --- A2A (Agent-to-Agent) Constants ---
+
+export const A2A_DEFAULT_TTL_S = 300;
+export const A2A_MAX_PAYLOAD_BYTES = 16384;
+export const A2A_MAX_MULTICAST = 10;
+export const A2A_CORRELATION_TIMEOUT_S = 3600;
+export const A2A_CLEANUP_INTERVAL_MS = 60000;
+export const A2A_MAX_PENDING_PER_AGENT = 100;
+
 // --- API Constants ---
 
 export const API_RATE_LIMIT_PER_MIN = 100;

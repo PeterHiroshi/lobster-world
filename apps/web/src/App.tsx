@@ -6,6 +6,7 @@ import { ActivityFeed } from './panels/ActivityFeed';
 import { TaskPanel } from './panels/TaskPanel';
 import { TeamPanel } from './panels/TeamPanel';
 import { BudgetBar } from './panels/BudgetBar';
+import { A2APanel } from './panels/A2APanel';
 import { SoundToggle } from './components/SoundToggle';
 import { ThemeToggle } from './components/ThemeToggle';
 import { MobileNav } from './components/MobileNav';
@@ -120,6 +121,7 @@ export function App() {
       <TaskPanel />
       <TeamPanel />
       <BudgetBar />
+      <A2APanel />
       <SoundToggle />
       <ThemeToggle />
       <PermissionRequestOverlay />
