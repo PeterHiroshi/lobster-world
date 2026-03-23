@@ -15,7 +15,7 @@ import type { TaskSlice, TaskCardAnimation } from './slices/taskSlice';
 import { createUiSlice } from './slices/uiSlice';
 import type { UiSlice } from './slices/uiSlice';
 import { createA2ASlice, makeConnectionId } from './slices/a2aSlice';
-import type { A2ASlice, A2AConnection, A2AActivity } from './slices/a2aSlice';
+import type { A2ASlice, A2AConnection } from './slices/a2aSlice';
 
 // Re-export types for backward compatibility
 export type { ConnectionStatus, WorldStats, Theme } from './slices/uiSlice';
@@ -23,7 +23,7 @@ export type { DialogueMessageEntry, ActiveDialogue } from './slices/dialogueSlic
 export type { LobsterStats, EffectEntry, EntranceAnimation } from './slices/lobsterSlice';
 export type { TeamAgent, TaskCardAnimation } from './slices/taskSlice';
 export type { LobbyState } from './slices/lobbySlice';
-export type { A2AConnection, A2AActivity } from './slices/a2aSlice';
+export type { A2AConnection } from './slices/a2aSlice';
 
 function countLobstersBySource(lobsters: Record<string, LobsterState>) {
   const all = Object.values(lobsters);

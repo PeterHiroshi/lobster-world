@@ -9,7 +9,7 @@ import type {
 import type { DialogueType, SessionStats } from './dialogue.js';
 import type { Task, TaskStatus, Meeting, PlatformEvent } from './workforce.js';
 import type { PermissionRequest, BudgetStatus } from './lobby.js';
-import type { A2AMessage, A2AMessageType } from './a2a.js';
+import type { A2AMessage } from './a2a.js';
 
 // --- Protocol Events ---
 
