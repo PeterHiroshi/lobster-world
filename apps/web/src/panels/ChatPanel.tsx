@@ -12,6 +12,19 @@ const TypingIndicator = memo(function TypingIndicator() {
   );
 });
 
+const LockIcon = memo(function LockIcon() {
+  return (
+    <svg
+      className="w-3 h-3 text-green-400 inline-block flex-shrink-0"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      aria-label="Encrypted"
+    >
+      <path d="M8 1a3.5 3.5 0 0 0-3.5 3.5V6H3.5A1.5 1.5 0 0 0 2 7.5v6A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 12.5 6H11.5V4.5A3.5 3.5 0 0 0 8 1zm-2 4.5a2 2 0 1 1 4 0V6H6V5.5z" />
+    </svg>
+  );
+});
+
 const MessageBubble = memo(function MessageBubble({ msg }: { msg: DialogueMessageEntry }) {
   const [showContent, setShowContent] = useState(false);
 
@@ -30,7 +43,8 @@ const MessageBubble = memo(function MessageBubble({ msg }: { msg: DialogueMessag
         <span className="text-xs font-medium" style={{ color: msg.fromColor }}>
           {msg.fromName}
         </span>
-        <div className="text-gray-300 text-xs mt-0.5">
+        <div className="text-gray-300 text-xs mt-0.5 flex items-center gap-1">
+          {msg.encrypted && <LockIcon />}
           {showContent ? msg.content : <TypingIndicator />}
         </div>
       </div>
@@ -66,6 +80,7 @@ const DialogueCard = memo(function DialogueCard({ dialogue }: { dialogue: Active
           <span className="text-gray-300 text-xs truncate">
             {dialogue.participantNames.join(' & ')}
           </span>
+          {dialogue.encrypted && <LockIcon />}
           {dialogue.ended && (
             <span className="text-gray-500 text-xs ml-1">
               ({dialogue.endReason === 'circuit_breaker' ? 'killed' : 'ended'})

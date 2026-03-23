@@ -1,3 +1,5 @@
+import type { LobsterSkin } from './customization.js';
+
 // --- Basic Types ---
 
 export interface Vec3 {
@@ -53,6 +55,7 @@ export interface LobsterState {
   mood: MoodType;
   bubbleText?: string;
   source?: LobsterSource;
+  skin?: LobsterSkin;
 }
 
 // --- Scene Types ---
@@ -84,7 +87,9 @@ export type AuditEventType =
   | 'dialogue_start'
   | 'dialogue_message'
   | 'dialogue_end'
-  | 'circuit_breaker_triggered';
+  | 'circuit_breaker_triggered'
+  | 'encrypted_dialogue'
+  | 'key_exchange';
 
 export interface AuditEvent {
   timestamp: number;

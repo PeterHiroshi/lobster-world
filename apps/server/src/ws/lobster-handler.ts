@@ -3,6 +3,9 @@ import type {
   UpstreamEvent,
   DownstreamEvent,
   LobsterState,
+  EncryptedDialogueMessage,
+  KeyExchangeRequest,
+  KeyExchangeResponse,
 } from '@lobster-world/protocol';
 import type { ConnectionManager } from './connection-manager.js';
 import type { LobsterRegistry } from '../engine/registry.js';
@@ -366,6 +369,140 @@ export function createLobsterHandler(deps: LobsterHandlerDeps) {
     });
   }
 
+  function handleKeyExchangeRequest(
+    lobsterId: string,
+    event: KeyExchangeRequest,
+  ): void {
+    const session = dialogue.getSession(event.sessionId);
+    if (!session || session.status !== 'active') {
+      sendError(
+        connections.getLobster(lobsterId)?.ws as WebSocket,
+        'SESSION_NOT_FOUND',
+        'Dialogue session not found or not active',
+      );
+      return;
+    }
+
+    if (!session.participants.includes(lobsterId)) {
+      sendError(
+        connections.getLobster(lobsterId)?.ws as WebSocket,
+        'NOT_PARTICIPANT',
+        'Not a participant in this session',
+      );
+      return;
+    }
+
+    const recipientId = session.participants.find((id) => id !== lobsterId);
+    if (recipientId) {
+      connections.sendToLobster(recipientId, event);
+      auditLog?.log('key_exchange', [lobsterId, recipientId], `Key exchange request for session ${event.sessionId}`);
+    }
+  }
+
+  function handleKeyExchangeResponse(
+    lobsterId: string,
+    event: KeyExchangeResponse,
+  ): void {
+    const session = dialogue.getSession(event.sessionId);
+    if (!session || session.status !== 'active') {
+      return;
+    }
+
+    if (!session.participants.includes(lobsterId)) {
+      return;
+    }
+
+    if (event.accepted) {
+      dialogue.markEncrypted(event.sessionId);
+      connections.broadcastToViewers({
+        type: 'dialogue_encrypted',
+        sessionId: event.sessionId,
+        participants: session.participants,
+      });
+    }
+
+    const recipientId = session.participants.find((id) => id !== lobsterId);
+    if (recipientId) {
+      connections.sendToLobster(recipientId, event);
+      auditLog?.log('key_exchange', [lobsterId, recipientId], `Key exchange ${event.accepted ? 'accepted' : 'rejected'} for session ${event.sessionId}`);
+    }
+  }
+
+  function handleEncryptedDialogue(
+    lobsterId: string,
+    event: EncryptedDialogueMessage,
+  ): void {
+    const session = dialogue.getSession(event.sessionId);
+    if (!session || session.status !== 'active') {
+      sendError(
+        connections.getLobster(lobsterId)?.ws as WebSocket,
+        'SESSION_NOT_FOUND',
+        'Dialogue session not found or not active',
+      );
+      return;
+    }
+
+    if (!session.participants.includes(lobsterId)) {
+      sendError(
+        connections.getLobster(lobsterId)?.ws as WebSocket,
+        'NOT_PARTICIPANT',
+        'Not a participant in this session',
+      );
+      return;
+    }
+
+    const sessionCheck = circuitBreaker.checkSession(session);
+    if (!sessionCheck.allowed) {
+      const stats = dialogue.endSession(event.sessionId, 'circuit_breaker');
+      if (stats) {
+        for (const participantId of session.participants) {
+          circuitBreaker.trackSessionEnd(participantId, event.sessionId, true);
+          connections.sendToLobster(participantId, {
+            type: 'dialogue_ended',
+            sessionId: event.sessionId,
+            reason: sessionCheck.reason ?? 'circuit_breaker',
+            stats,
+          });
+        }
+        auditLog?.log('circuit_breaker_triggered', session.participants, `Encrypted session killed: ${sessionCheck.reason}`);
+        connections.broadcastToViewers({
+          type: 'dialogue_end',
+          sessionId: event.sessionId,
+          reason: sessionCheck.reason ?? 'circuit_breaker',
+        });
+      }
+      return;
+    }
+
+    const ciphertextSize = event.encrypted.ciphertext.length;
+    const message = dialogue.addEncryptedMessage(event.sessionId, lobsterId, ciphertextSize);
+    if (!message) {
+      return;
+    }
+
+    const recipientId = session.participants.find((id) => id !== lobsterId);
+    if (recipientId) {
+      connections.sendToLobster(recipientId, event);
+    }
+
+    connections.broadcastToViewers({
+      type: 'dialogue_bubble',
+      lobsterIds: session.participants,
+    });
+
+    const senderProfile = registry.getLobster(lobsterId)?.profile;
+    connections.broadcastToViewers({
+      type: 'encrypted_dialogue_msg',
+      sessionId: event.sessionId,
+      fromId: lobsterId,
+      fromName: senderProfile?.name ?? 'Unknown',
+      fromColor: senderProfile?.color ?? '#888888',
+      turnNumber: message.turnNumber,
+    });
+
+    auditLog?.log('encrypted_dialogue', [lobsterId], `Encrypted turn ${message.turnNumber}, size=${ciphertextSize}`);
+  }
+
   // Register disconnect handler
   connections.onLobsterDisconnect((lobsterId: string) => {
     const lobster = registry.getLobster(lobsterId);
@@ -461,6 +598,15 @@ export function createLobsterHandler(deps: LobsterHandlerDeps) {
           case 'emote':
             handleEmote(lobsterId, event);
             break;
+          case 'key_exchange_request':
+            handleKeyExchangeRequest(lobsterId, event);
+            break;
+          case 'key_exchange_response':
+            handleKeyExchangeResponse(lobsterId, event);
+            break;
+          case 'encrypted_dialogue':
+            handleEncryptedDialogue(lobsterId, event);
+            break;
         }
       });
     },
@@ -496,6 +642,15 @@ export function createLobsterHandler(deps: LobsterHandlerDeps) {
           break;
         case 'emote':
           handleEmote(lobsterId, event);
+          break;
+        case 'key_exchange_request':
+          handleKeyExchangeRequest(lobsterId, event);
+          break;
+        case 'key_exchange_response':
+          handleKeyExchangeResponse(lobsterId, event);
+          break;
+        case 'encrypted_dialogue':
+          handleEncryptedDialogue(lobsterId, event);
           break;
       }
     },

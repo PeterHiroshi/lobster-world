@@ -1,6 +1,6 @@
 import type WebSocket from 'ws';
 import type { PublicProfile, DownstreamEvent, RenderEvent } from '@lobster-world/protocol';
-import { HEARTBEAT_INTERVAL_MS } from '../config.js';
+import { HEARTBEAT_INTERVAL_MS, WS_MAX_CONNECTIONS } from '../config.js';
 
 export interface LobsterConnection {
   ws: WebSocket;
@@ -18,14 +18,26 @@ export interface ViewerConnection {
 type LobsterDisconnectCallback = (lobsterId: string) => void;
 type ViewerDisconnectCallback = (viewerId: string) => void;
 
+export interface ConnectionStats {
+  lobsterCount: number;
+  viewerCount: number;
+  totalConnections: number;
+  maxConnections: number;
+}
+
 export class ConnectionManager {
   private lobsters = new Map<string, LobsterConnection>();
   private viewers = new Map<string, ViewerConnection>();
   private viewerCounter = 0;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly maxConnections: number;
 
   private onLobsterDisconnectCallbacks: LobsterDisconnectCallback[] = [];
   private onViewerDisconnectCallbacks: ViewerDisconnectCallback[] = [];
+
+  constructor(maxConnections = WS_MAX_CONNECTIONS) {
+    this.maxConnections = maxConnections;
+  }
 
   // --- Lobster methods ---
 

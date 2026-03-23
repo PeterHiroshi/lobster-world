@@ -10,6 +10,8 @@ import type { DialogueType, SessionStats } from './dialogue.js';
 import type { Task, TaskStatus, Meeting, PlatformEvent } from './workforce.js';
 import type { PermissionRequest, BudgetStatus } from './lobby.js';
 import type { A2AMessage } from './a2a.js';
+import type { KeyExchangeRequest, KeyExchangeResponse, EncryptedDialogueMessage } from './crypto.js';
+import type { LobsterSkin } from './customization.js';
 
 // --- Protocol Events ---
 
@@ -25,7 +27,10 @@ export type UpstreamEvent =
   | { type: 'dialogue_accept'; sessionId: string }
   | { type: 'dialogue_reject'; sessionId: string; reason?: string }
   | { type: 'emote'; emote: EmoteType }
-  | { type: 'a2a_send'; message: A2AMessage };
+  | { type: 'a2a_send'; message: A2AMessage }
+  | KeyExchangeRequest
+  | KeyExchangeResponse
+  | EncryptedDialogueMessage;
 
 // Downstream: Platform → Lobster (Social Proxy)
 export type DownstreamEvent =
@@ -37,7 +42,10 @@ export type DownstreamEvent =
   | { type: 'budget_warning'; remaining: number; limit: number }
   | { type: 'system_notice'; message: string }
   | { type: 'error'; code: string; message: string }
-  | { type: 'a2a_message'; message: A2AMessage };
+  | { type: 'a2a_message'; message: A2AMessage }
+  | KeyExchangeRequest
+  | KeyExchangeResponse
+  | EncryptedDialogueMessage;
 
 // Render: Platform → Frontend
 export type RenderEvent =
@@ -61,4 +69,7 @@ export type RenderEvent =
   | { type: 'a2a_task_delegate'; fromId: string; toId: string; taskTitle: string }
   | { type: 'a2a_review_request'; fromId: string; toId: string; title: string }
   | { type: 'a2a_knowledge_share'; fromId: string; topic: string; recipients: string[] }
-  | { type: 'a2a_collab_start'; sessionId: string; participants: string[]; topic: string };
+  | { type: 'a2a_collab_start'; sessionId: string; participants: string[]; topic: string }
+  | { type: 'dialogue_encrypted'; sessionId: string; participants: string[] }
+  | { type: 'encrypted_dialogue_msg'; sessionId: string; fromId: string; fromName: string; fromColor: string; turnNumber: number }
+  | { type: 'skin_update'; lobsterId: string; skin: LobsterSkin };

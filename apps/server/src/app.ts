@@ -36,6 +36,7 @@ import { EventProcessor } from './engine/events.js';
 import { DocManager } from './engine/docs.js';
 import { CodeReviewManager } from './engine/code-review.js';
 import { A2ARouter } from './engine/a2a-router.js';
+import { KeyStore } from './engine/key-store.js';
 import type { DatabaseConnection } from './db/connection.js';
 import { createDatabaseConnection } from './db/connection.js';
 import { PgTaskRepo } from './db/repositories/task-repo.js';
@@ -63,6 +64,7 @@ export interface AppDeps {
   docs: DocManager;
   codeReview: CodeReviewManager;
   a2aRouter: A2ARouter;
+  keyStore: KeyStore;
 }
 
 export function createDefaultDeps(): AppDeps {
@@ -85,6 +87,7 @@ export function createDefaultDeps(): AppDeps {
     docs: new DocManager(),
     codeReview: new CodeReviewManager(),
     a2aRouter: new A2ARouter(),
+    keyStore: new KeyStore(),
   };
 }
 
@@ -110,6 +113,7 @@ export async function createPgDeps(databaseUrl: string): Promise<{ deps: AppDeps
     docs: new DocManager(new PgDocRepo(db)),
     codeReview: new CodeReviewManager(new PgCodeReviewRepo(db)),
     a2aRouter: new A2ARouter(new PgA2ARepo(db)),
+    keyStore: new KeyStore(),
   };
   return { deps, dbConnection };
 }
@@ -186,6 +190,7 @@ export async function createApp(deps?: Partial<AppDeps>, dbConnection?: Database
     docs: d.docs,
     codeReview: d.codeReview,
     a2aRouter: d.a2aRouter,
+    keyStore: d.keyStore,
   });
   registerLobsterApiRoutes(server, {
     registry: d.registry,

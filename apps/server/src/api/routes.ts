@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import type { TaskStatus, TaskPriority, MessageType, MemoryCategory, CodeSubmissionStatus, A2AMessageType } from '@lobster-world/protocol';
+import type { TaskStatus, TaskPriority, MessageType, MemoryCategory, CodeSubmissionStatus, A2AMessageType, LobsterSkin } from '@lobster-world/protocol';
 import type { LobsterRegistry } from '../engine/registry.js';
 import type { SceneEngine } from '../engine/scene.js';
 import type { DialogueRouter } from '../engine/dialogue.js';
@@ -12,6 +12,7 @@ import type { EventProcessor } from '../engine/events.js';
 import type { DocManager } from '../engine/docs.js';
 import type { CodeReviewManager } from '../engine/code-review.js';
 import type { A2ARouter } from '../engine/a2a-router.js';
+import type { KeyStore } from '../engine/key-store.js';
 
 export interface RoutesDeps {
   registry: LobsterRegistry;
@@ -26,10 +27,11 @@ export interface RoutesDeps {
   docs?: DocManager;
   codeReview?: CodeReviewManager;
   a2aRouter?: A2ARouter;
+  keyStore?: KeyStore;
 }
 
 export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
-  const { registry, scene, dialogue, connections, auditLog, workforce, tasks, comms, events, docs, codeReview, a2aRouter } = deps;
+  const { registry, scene, dialogue, connections, auditLog, workforce, tasks, comms, events, docs, codeReview, a2aRouter, keyStore } = deps;
 
   // --- Existing routes ---
 
@@ -453,4 +455,75 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       return await a2aRouter.getStats();
     });
   }
+
+  // --- Crypto / Key Exchange routes ---
+
+  if (keyStore) {
+    app.post('/api/crypto/keys', async (request, reply) => {
+      const body = request.body as { lobsterId?: string; x25519PublicKey?: string };
+      if (!body.lobsterId || !body.x25519PublicKey) {
+        return reply.status(400).send({ error: 'lobsterId and x25519PublicKey are required' });
+      }
+      const record = keyStore.store(body.lobsterId, body.x25519PublicKey);
+      return reply.status(201).send(record);
+    });
+
+    app.get('/api/crypto/keys/:lobsterId', async (request, reply) => {
+      const { lobsterId } = request.params as { lobsterId: string };
+      const record = keyStore.get(lobsterId);
+      if (!record) {
+        return reply.status(404).send({ error: 'Public key not found' });
+      }
+      return record;
+    });
+
+    app.get('/api/crypto/keys', async () => {
+      return keyStore.getAll();
+    });
+  }
+
+  // --- Customization routes ---
+
+  app.post('/api/lobsters/:id/customize', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as { skin?: LobsterSkin };
+    if (!body.skin || !body.skin.bodyColor) {
+      return reply.status(400).send({ error: 'skin with bodyColor is required' });
+    }
+    const updated = registry.updateSkin(id, body.skin);
+    if (!updated) {
+      return reply.status(400).send({ error: 'Lobster not found or invalid skin data' });
+    }
+    return updated;
+  });
+
+  app.get('/api/lobsters/:id/skins', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    if (!registry.isRegistered(id)) {
+      return reply.status(404).send({ error: 'Lobster not found' });
+    }
+    return registry.getCustomizationPresets(id);
+  });
+
+  app.post('/api/lobsters/:id/skins', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as { skin?: LobsterSkin };
+    if (!body.skin || !body.skin.bodyColor || !body.skin.id) {
+      return reply.status(400).send({ error: 'skin with id and bodyColor is required' });
+    }
+    const saved = registry.savePreset(id, body.skin);
+    if (!saved) {
+      return reply.status(400).send({ error: 'Lobster not found, invalid skin, or preset limit reached' });
+    }
+    return reply.status(201).send({ saved: true });
+  });
+
+  app.delete('/api/lobsters/:id/skins/:skinId', async (request, reply) => {
+    const { id, skinId } = request.params as { id: string; skinId: string };
+    const deleted = registry.deletePreset(id, skinId);
+    if (!deleted) {
+      return reply.status(404).send({ error: 'Preset not found' });
+    }
+    return { deleted: true };
+  });
 }

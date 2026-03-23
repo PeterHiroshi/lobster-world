@@ -9,4 +9,7 @@ export * from './types/events.js';
 export * from './types/lobby.js';
 export * from './types/workforce.js';
 export * from './types/a2a.js';
+export * from './types/crypto.js';
+export * from './types/customization.js';
+export * from './crypto.js';
 export * from './constants.js';
