@@ -35,8 +35,22 @@ export const DEFAULT_BUDGET_CONFIG: BudgetConfig = {
 
 export const SCENE_UPDATE_INTERVAL_MS = 100;
 export const HEARTBEAT_INTERVAL_MS = 30000;
-export const MAX_LOBSTERS_PER_SCENE = 50;
+export const MAX_LOBSTERS_PER_SCENE = 200;
 export const AUDIT_RING_BUFFER_SIZE = 1000;
+
+// --- Performance / Scaling Constants ---
+
+export const WS_MAX_CONNECTIONS = 200;
+export const WS_BATCH_INTERVAL_MS = 100;
+export const WS_MAX_BATCH_SIZE = 50;
+export const SPATIAL_GRID_CELL_SIZE = 5;
+export const FRUSTUM_CULL_MARGIN = 2;
+export const LOD_HIGH_DISTANCE = 10;
+export const LOD_MEDIUM_DISTANCE = 20;
+export const LOD_LOW_BODY_SEGMENTS_CAP = 4;
+export const LOD_LOW_BODY_SEGMENTS_RADIAL = 8;
+export const LOD_MEDIUM_BODY_SEGMENTS_CAP = 8;
+export const LOD_MEDIUM_BODY_SEGMENTS_RADIAL = 16;
 export const MOCK_DIALOGUE_INTERVAL_MIN_MS = 30000;
 export const MOCK_DIALOGUE_INTERVAL_MAX_MS = 60000;
 

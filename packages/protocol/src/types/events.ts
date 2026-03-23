@@ -61,4 +61,5 @@ export type RenderEvent =
   | { type: 'a2a_task_delegate'; fromId: string; toId: string; taskTitle: string }
   | { type: 'a2a_review_request'; fromId: string; toId: string; title: string }
   | { type: 'a2a_knowledge_share'; fromId: string; topic: string; recipients: string[] }
-  | { type: 'a2a_collab_start'; sessionId: string; participants: string[]; topic: string };
+  | { type: 'a2a_collab_start'; sessionId: string; participants: string[]; topic: string }
+  | { type: 'render_batch'; events: RenderEvent[] };
