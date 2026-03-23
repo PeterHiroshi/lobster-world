@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import type { TaskStatus, TaskPriority, MessageType, MemoryCategory, CodeSubmissionStatus } from '@lobster-world/protocol';
+import type { TaskStatus, TaskPriority, MessageType, MemoryCategory, CodeSubmissionStatus, A2AMessageType } from '@lobster-world/protocol';
 import type { LobsterRegistry } from '../engine/registry.js';
 import type { SceneEngine } from '../engine/scene.js';
 import type { DialogueRouter } from '../engine/dialogue.js';
@@ -11,6 +11,7 @@ import type { CommsEngine } from '../engine/comms.js';
 import type { EventProcessor } from '../engine/events.js';
 import type { DocManager } from '../engine/docs.js';
 import type { CodeReviewManager } from '../engine/code-review.js';
+import type { A2ARouter } from '../engine/a2a-router.js';
 
 export interface RoutesDeps {
   registry: LobsterRegistry;
@@ -24,10 +25,11 @@ export interface RoutesDeps {
   events?: EventProcessor;
   docs?: DocManager;
   codeReview?: CodeReviewManager;
+  a2aRouter?: A2ARouter;
 }
 
 export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
-  const { registry, scene, dialogue, connections, auditLog, workforce, tasks, comms, events, docs, codeReview } = deps;
+  const { registry, scene, dialogue, connections, auditLog, workforce, tasks, comms, events, docs, codeReview, a2aRouter } = deps;
 
   // --- Existing routes ---
 
@@ -390,6 +392,65 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
     }, async (request) => {
       const { count } = request.query as { count?: number };
       return events.getRecent(count ?? 20);
+    });
+  }
+
+  // --- A2A (Agent-to-Agent) routes ---
+
+  if (a2aRouter) {
+    app.post('/api/a2a/send', async (request, reply) => {
+      const body = request.body as {
+        type?: A2AMessageType;
+        from?: string;
+        to?: string | string[];
+        payload?: Record<string, unknown>;
+        correlationId?: string;
+        ttl?: number;
+      };
+      if (!body.type || !body.from || !body.to || !body.payload) {
+        return reply.status(400).send({ error: 'type, from, to, and payload are required' });
+      }
+      try {
+        const message = a2aRouter.sendMessage({
+          type: body.type,
+          from: body.from,
+          to: body.to,
+          payload: body.payload as Parameters<typeof a2aRouter.sendMessage>[0]['payload'],
+          correlationId: body.correlationId,
+          ttl: body.ttl,
+        });
+        return reply.status(201).send(message);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        return reply.status(400).send({ error: errorMessage });
+      }
+    });
+
+    app.get('/api/a2a/pending/:id', async (request) => {
+      const { id } = request.params as { id: string };
+      return a2aRouter.getPending(id);
+    });
+
+    app.post('/api/a2a/ack/:msgId', async (request, reply) => {
+      const { msgId } = request.params as { msgId: string };
+      const { agentId } = request.body as { agentId?: string };
+      if (!agentId) {
+        return reply.status(400).send({ error: 'agentId is required' });
+      }
+      const acked = a2aRouter.ack(msgId, agentId);
+      if (!acked) {
+        return reply.status(404).send({ error: 'Message not found in pending queue' });
+      }
+      return { acked: true };
+    });
+
+    app.get('/api/a2a/chain/:corrId', async (request) => {
+      const { corrId } = request.params as { corrId: string };
+      return a2aRouter.getCorrelation(corrId);
+    });
+
+    app.get('/api/a2a/stats', async () => {
+      return a2aRouter.getStats();
     });
   }
 }

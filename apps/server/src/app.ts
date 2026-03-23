@@ -35,6 +35,7 @@ import { CommsEngine } from './engine/comms.js';
 import { EventProcessor } from './engine/events.js';
 import { DocManager } from './engine/docs.js';
 import { CodeReviewManager } from './engine/code-review.js';
+import { A2ARouter } from './engine/a2a-router.js';
 
 export interface AppDeps {
   connections: ConnectionManager;
@@ -53,6 +54,7 @@ export interface AppDeps {
   events: EventProcessor;
   docs: DocManager;
   codeReview: CodeReviewManager;
+  a2aRouter: A2ARouter;
 }
 
 export function createDefaultDeps(): AppDeps {
@@ -74,6 +76,7 @@ export function createDefaultDeps(): AppDeps {
     events: new EventProcessor(),
     docs: new DocManager(),
     codeReview: new CodeReviewManager(),
+    a2aRouter: new A2ARouter(),
   };
 }
 
@@ -147,6 +150,7 @@ export async function createApp(deps?: Partial<AppDeps>): Promise<App> {
     events: d.events,
     docs: d.docs,
     codeReview: d.codeReview,
+    a2aRouter: d.a2aRouter,
   });
   registerLobsterApiRoutes(server, {
     registry: d.registry,
