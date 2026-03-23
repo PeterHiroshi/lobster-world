@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useWorldStore } from '../src/store/useWorldStore';
-import type { RenderEvent, LobsterState, LobsterSkin, Scene } from '@lobster-world/protocol';
+import type { RenderEvent, LobsterState, LobsterSkin } from '@lobster-world/protocol';
 import {
   CUSTOMIZATION_DEFAULT_BODY_COLOR,
   CUSTOMIZATION_DEFAULT_CLAW_COLOR,
