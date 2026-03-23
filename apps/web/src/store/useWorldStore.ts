@@ -16,6 +16,8 @@ import { createUiSlice } from './slices/uiSlice';
 import type { UiSlice } from './slices/uiSlice';
 import { createA2ASlice, makeConnectionId } from './slices/a2aSlice';
 import type { A2ASlice, A2AConnection } from './slices/a2aSlice';
+import { createCustomizationSlice } from './slices/customizationSlice';
+import type { CustomizationSlice } from './slices/customizationSlice';
 
 // Re-export types for backward compatibility
 export type { ConnectionStatus, WorldStats, Theme } from './slices/uiSlice';
@@ -24,6 +26,8 @@ export type { LobsterStats, EffectEntry, EntranceAnimation } from './slices/lobs
 export type { TeamAgent, TaskCardAnimation } from './slices/taskSlice';
 export type { LobbyState } from './slices/lobbySlice';
 export type { A2AConnection } from './slices/a2aSlice';
+export type { CustomizationSlice } from './slices/customizationSlice';
+export { AVAILABLE_OPTIONS } from './slices/customizationSlice';
 
 function countLobstersBySource(lobsters: Record<string, LobsterState>) {
   const all = Object.values(lobsters);
@@ -39,7 +43,7 @@ interface RenderEventHandler {
   handleRenderEvent: (event: RenderEvent) => void;
 }
 
-type WorldState = LobsterSlice & DialogueSlice & LobbySlice & TaskSlice & UiSlice & A2ASlice & RenderEventHandler;
+type WorldState = LobsterSlice & DialogueSlice & LobbySlice & TaskSlice & UiSlice & A2ASlice & CustomizationSlice & RenderEventHandler;
 
 export const useWorldStore = create<WorldState>((...a) => {
   const [set, get] = a;
@@ -51,6 +55,7 @@ export const useWorldStore = create<WorldState>((...a) => {
     ...createTaskSlice(...a),
     ...createUiSlice(...a),
     ...createA2ASlice(...a),
+    ...createCustomizationSlice(...a),
 
     handleRenderEvent: (event: RenderEvent) => {
       switch (event.type) {
@@ -413,6 +418,19 @@ export const useWorldStore = create<WorldState>((...a) => {
               activeDialogues: {
                 ...state.activeDialogues,
                 [event.sessionId]: { ...dialogue, encrypted: true },
+              },
+            };
+          });
+          break;
+        }
+        case 'skin_update': {
+          set((state) => {
+            const existing = state.lobsters[event.lobsterId];
+            if (!existing) return state;
+            return {
+              lobsters: {
+                ...state.lobsters,
+                [event.lobsterId]: { ...existing, skin: event.skin },
               },
             };
           });
