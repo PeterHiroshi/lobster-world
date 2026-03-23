@@ -51,7 +51,7 @@ describe('New REST API routes', () => {
 
   describe('POST /api/tasks/:id/assign', () => {
     it('assigns an agent to a task', async () => {
-      const task = tasks.createTask({
+      const task = await tasks.createTask({
         projectId: 'p1',
         title: 'Test task',
         description: 'desc',
@@ -70,7 +70,7 @@ describe('New REST API routes', () => {
     });
 
     it('returns 400 when assigneeId is missing', async () => {
-      const task = tasks.createTask({
+      const task = await tasks.createTask({
         projectId: 'p1', title: 'T', description: '', priority: 'low', createdBy: 'a',
       });
       const res = await app.inject({
@@ -95,7 +95,7 @@ describe('New REST API routes', () => {
 
   describe('DELETE /api/meetings/:id', () => {
     it('ends an active meeting', async () => {
-      const meeting = comms.createMeeting('Standup', ['agent-1', 'agent-2']);
+      const meeting = await comms.createMeeting('Standup', ['agent-1', 'agent-2']);
       const res = await app.inject({
         method: 'DELETE',
         url: `/api/meetings/${meeting.id}`,
@@ -153,7 +153,7 @@ describe('New REST API routes', () => {
     });
 
     it('GET /api/docs?category=architecture filters by category', async () => {
-      docs.createDoc({ category: 'bugs', title: 'Bug', content: 'x', author: 'a', tags: [] });
+      await docs.createDoc({ category: 'bugs', title: 'Bug', content: 'x', author: 'a', tags: [] });
       const res = await app.inject({ method: 'GET', url: '/api/docs?category=architecture' });
       const body = res.json();
       expect(body.every((d: { category: string }) => d.category === 'architecture')).toBe(true);
@@ -166,7 +166,7 @@ describe('New REST API routes', () => {
     });
 
     it('GET /api/docs/:id returns a document', async () => {
-      const doc = docs.createDoc({ category: 'general', title: 'Test', content: 'c', author: 'a', tags: [] });
+      const doc = await docs.createDoc({ category: 'general', title: 'Test', content: 'c', author: 'a', tags: [] });
       const res = await app.inject({ method: 'GET', url: `/api/docs/${doc.id}` });
       expect(res.statusCode).toBe(200);
       expect(res.json().id).toBe(doc.id);
@@ -178,7 +178,7 @@ describe('New REST API routes', () => {
     });
 
     it('PUT /api/docs/:id updates a document', async () => {
-      const doc = docs.createDoc({ category: 'general', title: 'Old', content: 'old', author: 'a', tags: [] });
+      const doc = await docs.createDoc({ category: 'general', title: 'Old', content: 'old', author: 'a', tags: [] });
       const res = await app.inject({
         method: 'PUT',
         url: `/api/docs/${doc.id}`,
@@ -198,10 +198,10 @@ describe('New REST API routes', () => {
     });
 
     it('DELETE /api/docs/:id deletes a document', async () => {
-      const doc = docs.createDoc({ category: 'general', title: 'Del', content: 'x', author: 'a', tags: [] });
+      const doc = await docs.createDoc({ category: 'general', title: 'Del', content: 'x', author: 'a', tags: [] });
       const res = await app.inject({ method: 'DELETE', url: `/api/docs/${doc.id}` });
       expect(res.statusCode).toBe(200);
-      expect(docs.getDoc(doc.id)).toBeUndefined();
+      expect(await docs.getDoc(doc.id)).toBeUndefined();
     });
 
     it('DELETE /api/docs/:id returns 404 for non-existent', async () => {
@@ -246,7 +246,7 @@ describe('New REST API routes', () => {
     });
 
     it('GET /api/code/:id returns a submission', async () => {
-      const sub = codeReview.submitCode({ title: 'T', code: 'c', language: 'ts', author: 'a' });
+      const sub = await codeReview.submitCode({ title: 'T', code: 'c', language: 'ts', author: 'a' });
       const res = await app.inject({ method: 'GET', url: `/api/code/${sub.id}` });
       expect(res.statusCode).toBe(200);
       expect(res.json().id).toBe(sub.id);
@@ -258,7 +258,7 @@ describe('New REST API routes', () => {
     });
 
     it('POST /api/code/:id/review reviews a submission', async () => {
-      const sub = codeReview.submitCode({ title: 'T', code: 'c', language: 'ts', author: 'a' });
+      const sub = await codeReview.submitCode({ title: 'T', code: 'c', language: 'ts', author: 'a' });
       const res = await app.inject({
         method: 'POST',
         url: `/api/code/${sub.id}/review`,
@@ -273,7 +273,7 @@ describe('New REST API routes', () => {
     });
 
     it('POST /api/code/:id/review returns 400 for missing fields', async () => {
-      const sub = codeReview.submitCode({ title: 'T', code: 'c', language: 'ts', author: 'a' });
+      const sub = await codeReview.submitCode({ title: 'T', code: 'c', language: 'ts', author: 'a' });
       const res = await app.inject({
         method: 'POST',
         url: `/api/code/${sub.id}/review`,

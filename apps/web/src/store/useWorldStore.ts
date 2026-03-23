@@ -14,6 +14,8 @@ import { createTaskSlice } from './slices/taskSlice';
 import type { TaskSlice, TaskCardAnimation } from './slices/taskSlice';
 import { createUiSlice } from './slices/uiSlice';
 import type { UiSlice } from './slices/uiSlice';
+import { createA2ASlice, makeConnectionId } from './slices/a2aSlice';
+import type { A2ASlice, A2AConnection } from './slices/a2aSlice';
 
 // Re-export types for backward compatibility
 export type { ConnectionStatus, WorldStats, Theme } from './slices/uiSlice';
@@ -21,6 +23,7 @@ export type { DialogueMessageEntry, ActiveDialogue } from './slices/dialogueSlic
 export type { LobsterStats, EffectEntry, EntranceAnimation } from './slices/lobsterSlice';
 export type { TeamAgent, TaskCardAnimation } from './slices/taskSlice';
 export type { LobbyState } from './slices/lobbySlice';
+export type { A2AConnection } from './slices/a2aSlice';
 
 function countLobstersBySource(lobsters: Record<string, LobsterState>) {
   const all = Object.values(lobsters);
@@ -36,7 +39,7 @@ interface RenderEventHandler {
   handleRenderEvent: (event: RenderEvent) => void;
 }
 
-type WorldState = LobsterSlice & DialogueSlice & LobbySlice & TaskSlice & UiSlice & RenderEventHandler;
+type WorldState = LobsterSlice & DialogueSlice & LobbySlice & TaskSlice & UiSlice & A2ASlice & RenderEventHandler;
 
 export const useWorldStore = create<WorldState>((...a) => {
   const [set, get] = a;
@@ -47,6 +50,7 @@ export const useWorldStore = create<WorldState>((...a) => {
     ...createLobbySlice(...a),
     ...createTaskSlice(...a),
     ...createUiSlice(...a),
+    ...createA2ASlice(...a),
 
     handleRenderEvent: (event: RenderEvent) => {
       switch (event.type) {
@@ -324,6 +328,81 @@ export const useWorldStore = create<WorldState>((...a) => {
         }
         case 'budget_status': {
           set({ budgetStatus: event.status });
+          break;
+        }
+        case 'a2a_task_delegate': {
+          const connId = `a2a-conn-${makeConnectionId()}`;
+          const conn: A2AConnection = {
+            id: connId,
+            fromId: event.fromId,
+            toId: event.toId,
+            type: 'task_delegate',
+            startTime: Date.now(),
+          };
+          get().addA2AConnection(conn);
+          get().addA2AActivity({
+            id: connId,
+            type: 'task_delegate',
+            fromId: event.fromId,
+            toId: event.toId,
+            summary: `Delegated task: ${event.taskTitle}`,
+            timestamp: Date.now(),
+          });
+          get().incrementNotification(event.toId);
+          break;
+        }
+        case 'a2a_review_request': {
+          const connId = `a2a-conn-${makeConnectionId()}`;
+          const conn: A2AConnection = {
+            id: connId,
+            fromId: event.fromId,
+            toId: event.toId,
+            type: 'review_request',
+            startTime: Date.now(),
+          };
+          get().addA2AConnection(conn);
+          get().addA2AActivity({
+            id: connId,
+            type: 'review_request',
+            fromId: event.fromId,
+            toId: event.toId,
+            summary: `Review requested: ${event.title}`,
+            timestamp: Date.now(),
+          });
+          get().incrementNotification(event.toId);
+          break;
+        }
+        case 'a2a_knowledge_share': {
+          const connId = `a2a-conn-${makeConnectionId()}`;
+          for (const recipientId of event.recipients) {
+            get().addA2AConnection({
+              id: `${connId}-${recipientId}`,
+              fromId: event.fromId,
+              toId: recipientId,
+              type: 'knowledge_share',
+              startTime: Date.now(),
+            });
+          }
+          get().addA2AActivity({
+            id: connId,
+            type: 'knowledge_share',
+            fromId: event.fromId,
+            toId: event.recipients,
+            summary: `Shared knowledge: ${event.topic}`,
+            timestamp: Date.now(),
+          });
+          break;
+        }
+        case 'a2a_collab_start': {
+          get().addCollabSession(event.sessionId);
+          get().addA2AActivity({
+            id: `collab-${event.sessionId}`,
+            type: 'collab_invite',
+            fromId: event.participants[0] ?? '',
+            toId: event.participants,
+            summary: `Collaboration started: ${event.topic}`,
+            timestamp: Date.now(),
+          });
           break;
         }
       }

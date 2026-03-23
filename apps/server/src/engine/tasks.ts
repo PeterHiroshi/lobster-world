@@ -1,107 +1,79 @@
-import type { Task, TaskStatus, TaskPriority } from '@lobster-world/protocol';
-import { VALID_TASK_TRANSITIONS, MAX_TASKS_PER_PROJECT } from '@lobster-world/protocol';
+import type { Task, TaskStatus } from '@lobster-world/protocol';
+import { VALID_TASK_TRANSITIONS } from '@lobster-world/protocol';
+import type { TaskRepository, CreateTaskOpts } from '../db/repositories/task-repo.js';
+import { InMemoryTaskRepo } from '../db/repositories/task-repo.js';
 
-export interface CreateTaskOpts {
-  projectId: string;
-  title: string;
-  description: string;
-  priority: TaskPriority;
-  createdBy: string;
-  assigneeId?: string;
-}
+export type { CreateTaskOpts } from '../db/repositories/task-repo.js';
 
 export class TaskEngine {
-  private tasks: Map<string, Task> = new Map();
-  private nextId: number = 1;
+  private repo: TaskRepository;
 
-  createTask(opts: CreateTaskOpts): Task {
-    const id = `task-${this.nextId++}`;
-    const now = Date.now();
-    const task: Task = {
-      id,
-      projectId: opts.projectId,
-      title: opts.title,
-      description: opts.description,
-      status: 'todo',
-      priority: opts.priority,
-      createdBy: opts.createdBy,
-      assigneeId: opts.assigneeId,
-      subtasks: [],
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.tasks.set(id, task);
-    return task;
+  constructor(repo?: TaskRepository) {
+    this.repo = repo ?? new InMemoryTaskRepo();
   }
 
-  getTask(id: string): Task | undefined {
-    return this.tasks.get(id);
+  async createTask(opts: CreateTaskOpts): Promise<Task> {
+    return this.repo.create(opts);
   }
 
-  getAllTasks(): Task[] {
-    return [...this.tasks.values()];
+  async getTask(id: string): Promise<Task | undefined> {
+    return this.repo.getById(id);
   }
 
-  getTasksByProject(projectId: string): Task[] {
-    return this.getAllTasks().filter((t) => t.projectId === projectId);
+  async getAllTasks(): Promise<Task[]> {
+    return this.repo.getAll();
   }
 
-  getTasksByAssignee(assigneeId: string): Task[] {
-    return this.getAllTasks().filter((t) => t.assigneeId === assigneeId);
+  async getTasksByProject(projectId: string): Promise<Task[]> {
+    return this.repo.getByProject(projectId);
   }
 
-  getTasksByStatus(status: TaskStatus): Task[] {
-    return this.getAllTasks().filter((t) => t.status === status);
+  async getTasksByAssignee(assigneeId: string): Promise<Task[]> {
+    return this.repo.getByAssignee(assigneeId);
   }
 
-  updateTask(
+  async getTasksByStatus(status: TaskStatus): Promise<Task[]> {
+    return this.repo.getByStatus(status);
+  }
+
+  async updateTask(
     id: string,
     partial: Partial<Pick<Task, 'title' | 'description' | 'priority'>>,
-  ): Task | undefined {
-    const task = this.tasks.get(id);
-    if (!task) return undefined;
-    if (partial.title !== undefined) task.title = partial.title;
-    if (partial.description !== undefined) task.description = partial.description;
-    if (partial.priority !== undefined) task.priority = partial.priority;
-    task.updatedAt = Date.now();
-    return task;
+  ): Promise<Task | undefined> {
+    return this.repo.update(id, partial);
   }
 
-  transitionStatus(id: string, newStatus: TaskStatus): Task | undefined {
-    const task = this.tasks.get(id);
+  async transitionStatus(id: string, newStatus: TaskStatus): Promise<Task | undefined> {
+    const task = await this.repo.getById(id);
     if (!task) return undefined;
     const allowed = VALID_TASK_TRANSITIONS[task.status];
     if (!allowed.includes(newStatus)) return undefined;
-    task.status = newStatus;
-    task.updatedAt = Date.now();
-    return task;
+    return this.repo.update(id, { status: newStatus });
   }
 
-  assignTask(taskId: string, agentId: string): Task | undefined {
-    const task = this.tasks.get(taskId);
+  async assignTask(taskId: string, agentId: string): Promise<Task | undefined> {
+    const task = await this.repo.getById(taskId);
     if (!task) return undefined;
-    task.assigneeId = agentId;
+    const updates: Partial<Pick<Task, 'assigneeId' | 'status'>> = { assigneeId: agentId };
     if (task.status === 'todo') {
-      task.status = 'doing';
+      updates.status = 'doing';
     }
-    task.updatedAt = Date.now();
-    return task;
+    return this.repo.update(taskId, updates);
   }
 
-  createSubtask(parentId: string, opts: CreateTaskOpts): Task | undefined {
-    const parent = this.tasks.get(parentId);
+  async createSubtask(parentId: string, opts: CreateTaskOpts): Promise<Task | undefined> {
+    const parent = await this.repo.getById(parentId);
     if (!parent) return undefined;
-    const subtask = this.createTask(opts);
-    parent.subtasks.push(subtask.id);
-    parent.updatedAt = Date.now();
+    const subtask = await this.repo.create(opts);
+    await this.repo.update(parentId, { subtasks: [...parent.subtasks, subtask.id] });
     return subtask;
   }
 
-  deleteTask(id: string): boolean {
-    return this.tasks.delete(id);
+  async deleteTask(id: string): Promise<boolean> {
+    return this.repo.delete(id);
   }
 
-  getTaskCount(): number {
-    return this.tasks.size;
+  async getTaskCount(): Promise<number> {
+    return this.repo.count();
   }
 }

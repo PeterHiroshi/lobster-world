@@ -1,11 +1,8 @@
 import type { CodeSubmission, CodeSubmissionStatus, CodeReviewComment } from '@lobster-world/protocol';
+import type { CodeReviewRepository, SubmitCodeOpts } from '../db/repositories/code-review-repo.js';
+import { InMemoryCodeReviewRepo } from '../db/repositories/code-review-repo.js';
 
-export interface SubmitCodeOpts {
-  title: string;
-  code: string;
-  language: string;
-  author: string;
-}
+export type { SubmitCodeOpts } from '../db/repositories/code-review-repo.js';
 
 export interface ReviewOpts {
   reviewerId: string;
@@ -13,63 +10,53 @@ export interface ReviewOpts {
   comment: string;
 }
 
+let nextCommentId = 1;
+
 export class CodeReviewManager {
-  private submissions: Map<string, CodeSubmission> = new Map();
-  private nextId: number = 1;
-  private nextCommentId: number = 1;
+  private repo: CodeReviewRepository;
 
-  submitCode(opts: SubmitCodeOpts): CodeSubmission {
-    const id = `code-${this.nextId++}`;
-    const now = Date.now();
-    const submission: CodeSubmission = {
-      id,
-      title: opts.title,
-      code: opts.code,
-      language: opts.language,
-      author: opts.author,
-      status: 'pending',
-      comments: [],
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.submissions.set(id, submission);
-    return submission;
+  constructor(repo?: CodeReviewRepository) {
+    this.repo = repo ?? new InMemoryCodeReviewRepo();
   }
 
-  getSubmission(id: string): CodeSubmission | undefined {
-    return this.submissions.get(id);
+  async submitCode(opts: SubmitCodeOpts): Promise<CodeSubmission> {
+    return this.repo.create(opts);
   }
 
-  getAllSubmissions(): CodeSubmission[] {
-    return [...this.submissions.values()];
+  async getSubmission(id: string): Promise<CodeSubmission | undefined> {
+    return this.repo.getById(id);
   }
 
-  reviewCode(id: string, review: ReviewOpts): CodeSubmission | undefined {
-    const submission = this.submissions.get(id);
+  async getAllSubmissions(): Promise<CodeSubmission[]> {
+    return this.repo.getAll();
+  }
+
+  async reviewCode(id: string, review: ReviewOpts): Promise<CodeSubmission | undefined> {
+    const submission = await this.repo.getById(id);
     if (!submission) return undefined;
 
     const comment: CodeReviewComment = {
-      id: `comment-${this.nextCommentId++}`,
+      id: `comment-${nextCommentId++}`,
       reviewerId: review.reviewerId,
       content: review.comment,
       timestamp: Date.now(),
     };
 
-    submission.comments.push(comment);
-    submission.status = review.status;
-    submission.updatedAt = Date.now();
-    return submission;
+    return this.repo.update(id, {
+      status: review.status,
+      comments: [...submission.comments, comment],
+    });
   }
 
-  getSubmissionsByStatus(status: CodeSubmissionStatus): CodeSubmission[] {
-    return this.getAllSubmissions().filter((s) => s.status === status);
+  async getSubmissionsByStatus(status: CodeSubmissionStatus): Promise<CodeSubmission[]> {
+    return this.repo.getByStatus(status);
   }
 
-  getSubmissionsByAuthor(author: string): CodeSubmission[] {
-    return this.getAllSubmissions().filter((s) => s.author === author);
+  async getSubmissionsByAuthor(author: string): Promise<CodeSubmission[]> {
+    return this.repo.getByAuthor(author);
   }
 
-  getSubmissionCount(): number {
-    return this.submissions.size;
+  async getSubmissionCount(): Promise<number> {
+    return this.repo.count();
   }
 }

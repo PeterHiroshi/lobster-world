@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import type { TaskStatus, TaskPriority, MessageType, MemoryCategory, CodeSubmissionStatus } from '@lobster-world/protocol';
+import type { TaskStatus, TaskPriority, MessageType, MemoryCategory, CodeSubmissionStatus, A2AMessageType } from '@lobster-world/protocol';
 import type { LobsterRegistry } from '../engine/registry.js';
 import type { SceneEngine } from '../engine/scene.js';
 import type { DialogueRouter } from '../engine/dialogue.js';
@@ -11,6 +11,7 @@ import type { CommsEngine } from '../engine/comms.js';
 import type { EventProcessor } from '../engine/events.js';
 import type { DocManager } from '../engine/docs.js';
 import type { CodeReviewManager } from '../engine/code-review.js';
+import type { A2ARouter } from '../engine/a2a-router.js';
 
 export interface RoutesDeps {
   registry: LobsterRegistry;
@@ -24,10 +25,11 @@ export interface RoutesDeps {
   events?: EventProcessor;
   docs?: DocManager;
   codeReview?: CodeReviewManager;
+  a2aRouter?: A2ARouter;
 }
 
 export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
-  const { registry, scene, dialogue, connections, auditLog, workforce, tasks, comms, events, docs, codeReview } = deps;
+  const { registry, scene, dialogue, connections, auditLog, workforce, tasks, comms, events, docs, codeReview, a2aRouter } = deps;
 
   // --- Existing routes ---
 
@@ -64,7 +66,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       },
     }, async (request) => {
       const { count } = request.query as { count?: number };
-      return auditLog.getRecent(count ?? 100);
+      return await auditLog.getRecent(count ?? 100);
     });
   }
 
@@ -114,15 +116,15 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
         assignee?: string;
         project?: string;
       };
-      if (status) return tasks.getTasksByStatus(status);
-      if (assignee) return tasks.getTasksByAssignee(assignee);
-      if (project) return tasks.getTasksByProject(project);
-      return tasks.getAllTasks();
+      if (status) return await tasks.getTasksByStatus(status);
+      if (assignee) return await tasks.getTasksByAssignee(assignee);
+      if (project) return await tasks.getTasksByProject(project);
+      return await tasks.getAllTasks();
     });
 
     app.get('/api/tasks/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
-      const task = tasks.getTask(id);
+      const task = await tasks.getTask(id);
       if (!task) {
         return reply.status(404).send({ error: 'Task not found' });
       }
@@ -141,7 +143,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       if (!body.projectId || !body.title || !body.createdBy) {
         return reply.status(400).send({ error: 'projectId, title, and createdBy are required' });
       }
-      const task = tasks.createTask({
+      const task = await tasks.createTask({
         projectId: body.projectId,
         title: body.title,
         description: body.description ?? '',
@@ -155,7 +157,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
     app.put('/api/tasks/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
       const body = request.body as { title?: string; description?: string; priority?: TaskPriority };
-      const task = tasks.updateTask(id, body);
+      const task = await tasks.updateTask(id, body);
       if (!task) {
         return reply.status(404).send({ error: 'Task not found' });
       }
@@ -168,7 +170,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       if (!status) {
         return reply.status(400).send({ error: 'status is required' });
       }
-      const task = tasks.transitionStatus(id, status);
+      const task = await tasks.transitionStatus(id, status);
       if (!task) {
         return reply.status(400).send({ error: 'Invalid transition or task not found' });
       }
@@ -190,7 +192,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       if (!body.from || !body.to || !body.content) {
         return reply.status(400).send({ error: 'from, to, and content are required' });
       }
-      const msg = comms.sendMessage(
+      const msg = await comms.sendMessage(
         body.from,
         body.to,
         body.type ?? 'direct',
@@ -203,12 +205,12 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
     // --- Meeting routes ---
 
     app.get('/api/meetings', async () => {
-      return comms.getActiveMeetings();
+      return await comms.getActiveMeetings();
     });
 
     app.get('/api/meetings/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
-      const meeting = comms.getMeeting(id);
+      const meeting = await comms.getMeeting(id);
       if (!meeting) {
         return reply.status(404).send({ error: 'Meeting not found' });
       }
@@ -220,7 +222,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       if (!topic || !participants?.length) {
         return reply.status(400).send({ error: 'topic and participants are required' });
       }
-      const meeting = comms.createMeeting(topic, participants);
+      const meeting = await comms.createMeeting(topic, participants);
       return reply.status(201).send(meeting);
     });
   }
@@ -234,7 +236,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       if (!assigneeId) {
         return reply.status(400).send({ error: 'assigneeId is required' });
       }
-      const task = tasks.assignTask(id, assigneeId);
+      const task = await tasks.assignTask(id, assigneeId);
       if (!task) {
         return reply.status(404).send({ error: 'Task not found' });
       }
@@ -247,7 +249,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
   if (comms) {
     app.delete('/api/meetings/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
-      const meeting = comms.endMeeting(id);
+      const meeting = await comms.endMeeting(id);
       if (!meeting) {
         return reply.status(404).send({ error: 'Meeting not found' });
       }
@@ -260,14 +262,14 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
   if (docs) {
     app.get('/api/docs', async (request) => {
       const { category, tag } = request.query as { category?: MemoryCategory; tag?: string };
-      if (category) return docs.getDocsByCategory(category);
-      if (tag) return docs.getDocsByTag(tag);
-      return docs.getAllDocs();
+      if (category) return await docs.getDocsByCategory(category);
+      if (tag) return await docs.getDocsByTag(tag);
+      return await docs.getAllDocs();
     });
 
     app.get('/api/docs/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
-      const doc = docs.getDoc(id);
+      const doc = await docs.getDoc(id);
       if (!doc) {
         return reply.status(404).send({ error: 'Document not found' });
       }
@@ -285,7 +287,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       if (!body.category || !body.title || !body.content || !body.author) {
         return reply.status(400).send({ error: 'category, title, content, and author are required' });
       }
-      const doc = docs.createDoc({
+      const doc = await docs.createDoc({
         category: body.category,
         title: body.title,
         content: body.content,
@@ -298,7 +300,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
     app.put('/api/docs/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
       const body = request.body as { title?: string; content?: string; tags?: string[]; category?: MemoryCategory };
-      const doc = docs.updateDoc(id, body);
+      const doc = await docs.updateDoc(id, body);
       if (!doc) {
         return reply.status(404).send({ error: 'Document not found' });
       }
@@ -307,7 +309,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
 
     app.delete('/api/docs/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
-      const deleted = docs.deleteDoc(id);
+      const deleted = await docs.deleteDoc(id);
       if (!deleted) {
         return reply.status(404).send({ error: 'Document not found' });
       }
@@ -328,7 +330,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       if (!body.title || !body.code || !body.language || !body.author) {
         return reply.status(400).send({ error: 'title, code, language, and author are required' });
       }
-      const sub = codeReview.submitCode({
+      const sub = await codeReview.submitCode({
         title: body.title,
         code: body.code,
         language: body.language,
@@ -339,14 +341,14 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
 
     app.get('/api/code/submissions', async (request) => {
       const { status, author } = request.query as { status?: CodeSubmissionStatus; author?: string };
-      if (status) return codeReview.getSubmissionsByStatus(status);
-      if (author) return codeReview.getSubmissionsByAuthor(author);
-      return codeReview.getAllSubmissions();
+      if (status) return await codeReview.getSubmissionsByStatus(status);
+      if (author) return await codeReview.getSubmissionsByAuthor(author);
+      return await codeReview.getAllSubmissions();
     });
 
     app.get('/api/code/:id', async (request, reply) => {
       const { id } = request.params as { id: string };
-      const sub = codeReview.getSubmission(id);
+      const sub = await codeReview.getSubmission(id);
       if (!sub) {
         return reply.status(404).send({ error: 'Submission not found' });
       }
@@ -363,7 +365,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       if (!body.reviewerId || !body.status || !body.comment) {
         return reply.status(400).send({ error: 'reviewerId, status, and comment are required' });
       }
-      const sub = codeReview.reviewCode(id, {
+      const sub = await codeReview.reviewCode(id, {
         reviewerId: body.reviewerId,
         status: body.status,
         comment: body.comment,
@@ -390,6 +392,65 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
     }, async (request) => {
       const { count } = request.query as { count?: number };
       return events.getRecent(count ?? 20);
+    });
+  }
+
+  // --- A2A (Agent-to-Agent) routes ---
+
+  if (a2aRouter) {
+    app.post('/api/a2a/send', async (request, reply) => {
+      const body = request.body as {
+        type?: A2AMessageType;
+        from?: string;
+        to?: string | string[];
+        payload?: Record<string, unknown>;
+        correlationId?: string;
+        ttl?: number;
+      };
+      if (!body.type || !body.from || !body.to || !body.payload) {
+        return reply.status(400).send({ error: 'type, from, to, and payload are required' });
+      }
+      try {
+        const message = await a2aRouter.sendMessage({
+          type: body.type,
+          from: body.from,
+          to: body.to,
+          payload: body.payload as Parameters<typeof a2aRouter.sendMessage>[0]['payload'],
+          correlationId: body.correlationId,
+          ttl: body.ttl,
+        });
+        return reply.status(201).send(message);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        return reply.status(400).send({ error: errorMessage });
+      }
+    });
+
+    app.get('/api/a2a/pending/:id', async (request) => {
+      const { id } = request.params as { id: string };
+      return await a2aRouter.getPending(id);
+    });
+
+    app.post('/api/a2a/ack/:msgId', async (request, reply) => {
+      const { msgId } = request.params as { msgId: string };
+      const { agentId } = request.body as { agentId?: string };
+      if (!agentId) {
+        return reply.status(400).send({ error: 'agentId is required' });
+      }
+      const acked = await a2aRouter.ack(msgId, agentId);
+      if (!acked) {
+        return reply.status(404).send({ error: 'Message not found in pending queue' });
+      }
+      return { acked: true };
+    });
+
+    app.get('/api/a2a/chain/:corrId', async (request) => {
+      const { corrId } = request.params as { corrId: string };
+      return await a2aRouter.getCorrelation(corrId);
+    });
+
+    app.get('/api/a2a/stats', async () => {
+      return await a2aRouter.getStats();
     });
   }
 }

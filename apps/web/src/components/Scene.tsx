@@ -5,6 +5,7 @@ import { LobsterRenderer } from './LobsterRenderer';
 import { CameraController } from './CameraController';
 import { Particles } from './Particles';
 import { DialogueConnections } from './DialogueConnections';
+import { A2AConnections } from './A2AConnections';
 import { LobsterDetailCard } from './LobsterDetailCard';
 import { CAMERA_INITIAL_POSITION } from '../lib/constants';
 import { useWorldStore } from '../store/useWorldStore';
@@ -48,6 +49,7 @@ export function Scene() {
       <LobsterRenderer />
       <Particles />
       <DialogueConnections />
+      <A2AConnections />
       <LobsterDetailCard />
     </Canvas>
   );
