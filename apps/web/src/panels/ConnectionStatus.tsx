@@ -1,5 +1,4 @@
 import { useWorldStore } from '../store/useWorldStore';
-import { WS_VIEWER_URL } from '../lib/constants';
 
 const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
   connected: { color: '#22c55e', label: 'Connected' },
@@ -10,6 +9,7 @@ const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
 
 export function ConnectionStatus() {
   const connectionStatus = useWorldStore((s) => s.connectionStatus);
+  const stats = useWorldStore((s) => s.stats);
   const config = STATUS_CONFIG[connectionStatus] ?? STATUS_CONFIG.disconnected;
 
   return (
@@ -19,7 +19,15 @@ export function ConnectionStatus() {
         style={{ backgroundColor: config.color }}
       />
       <span>{config.label}</span>
-      <span className="opacity-40 text-xs ml-1">{WS_VIEWER_URL}</span>
+      {connectionStatus === 'connected' && stats.lobsterCount > 0 ? (
+        <span className="opacity-40 text-xs ml-1">
+          {stats.realLobsterCount > 0
+            ? `${stats.realLobsterCount} real + ${stats.demoLobsterCount} demo`
+            : `${stats.lobsterCount} lobster${stats.lobsterCount !== 1 ? 's' : ''}`}
+        </span>
+      ) : (
+        <span className="opacity-40 text-xs ml-1">{WS_VIEWER_URL}</span>
+      )}
     </div>
   );
 }

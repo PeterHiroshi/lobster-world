@@ -23,6 +23,7 @@ import { createLobsterHandler } from './ws/lobster-handler.js';
 import { createViewerHandler } from './ws/viewer-handler.js';
 import { createSocialLobbyHandler } from './ws/social-lobby-handler.js';
 import { registerRoutes } from './api/routes.js';
+import { registerLobsterApiRoutes } from './api/lobster-api.js';
 import { AuditLog } from './engine/audit-log.js';
 import { AuthManager } from './engine/auth.js';
 import { LobbyManager } from './engine/lobby.js';
@@ -138,6 +139,13 @@ export async function createApp(deps?: Partial<AppDeps>): Promise<App> {
     tasks: d.tasks,
     comms: d.comms,
     events: d.events,
+  });
+  registerLobsterApiRoutes(server, {
+    registry: d.registry,
+    scene: d.scene,
+    dialogue: d.dialogue,
+    connections: d.connections,
+    lobbyManager: d.lobbyManager,
   });
 
   // --- WebSocket servers ---
