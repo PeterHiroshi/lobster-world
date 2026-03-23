@@ -1,4 +1,4 @@
-import type { StatusType, LobsterState, Scene } from './core.js';
+import type { StatusType, LobsterState, Scene, LobsterSource } from './core.js';
 
 // --- Dialogue Type (shared with dialogue.ts) ---
 
@@ -115,4 +115,24 @@ export type SocialProxyDownstream =
   | { type: 'dialogue_message'; sessionId: string; from: string; content: string; turnNumber: number }
   | { type: 'dialogue_ended'; sessionId: string; reason: string }
   | { type: 'auth_challenge'; challenge: AuthChallenge }
-  | { type: 'budget_warning'; level: 'warning' | 'critical'; tokensUsed: number; tokensLimit: number; sessionsUsed: number; sessionsLimit: number };
+  | { type: 'budget_warning'; level: 'warning' | 'critical'; tokensUsed: number; tokensLimit: number; sessionsUsed: number; sessionsLimit: number }
+  | { type: 'reconnect_resume'; lobsterId: string; scene: Scene; activeSessions: string[] };
+
+// --- World Snapshot (REST API response) ---
+
+export interface WorldSnapshot {
+  sceneId: string;
+  sceneName: string;
+  lobsters: Array<{
+    id: string;
+    displayName: string;
+    color: string;
+    status: StatusType;
+    activity?: string;
+    source: LobsterSource;
+    position: { x: number; y: number; z: number };
+  }>;
+  activeDialogues: number;
+  totalConnections: number;
+  timestamp: number;
+}

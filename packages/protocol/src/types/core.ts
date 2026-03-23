@@ -40,6 +40,8 @@ export interface PublicProfile {
   bio?: string;
 }
 
+export type LobsterSource = 'demo' | 'plugin' | 'api';
+
 export interface LobsterState {
   id: string;
   profile: PublicProfile;
@@ -50,6 +52,7 @@ export interface LobsterState {
   activity?: string;
   mood: MoodType;
   bubbleText?: string;
+  source?: LobsterSource;
 }
 
 // --- Scene Types ---
