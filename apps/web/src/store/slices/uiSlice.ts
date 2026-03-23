@@ -1,11 +1,32 @@
 import type { StateCreator } from 'zustand';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
+export type Theme = 'dark' | 'light';
 
 export interface WorldStats {
   lobsterCount: number;
+  realLobsterCount: number;
+  demoLobsterCount: number;
   activeDialogues: number;
   totalMessages: number;
+}
+
+const THEME_STORAGE_KEY = 'lobster-world-theme';
+
+function getInitialTheme(): Theme {
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === 'light' || stored === 'dark') return stored;
+  } catch {
+    // localStorage unavailable
+  }
+  return 'dark';
+}
+
+function applyThemeToDocument(theme: Theme): void {
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.documentElement.classList.toggle('light', theme === 'light');
 }
 
 export interface UiSlice {
@@ -14,33 +35,59 @@ export interface UiSlice {
   focusLobsterId: string | null;
   selectedLobsterId: string | null;
   selectedTaskId: string | null;
+  theme: Theme;
+  tourStep: number;
+  tourActive: boolean;
 
   setConnectionStatus: (status: ConnectionStatus) => void;
   setFocusLobster: (id: string | null) => void;
   setSelectedLobster: (id: string | null) => void;
   setSelectedTask: (id: string | null) => void;
+  toggleTheme: () => void;
+  setTourStep: (step: number) => void;
+  startTour: () => void;
+  skipTour: () => void;
 }
 
-export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set) => ({
-  connectionStatus: 'disconnected',
-  stats: { lobsterCount: 0, activeDialogues: 0, totalMessages: 0 },
-  focusLobsterId: null,
-  selectedLobsterId: null,
-  selectedTaskId: null,
+export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set, get) => {
+  const initialTheme = getInitialTheme();
+  applyThemeToDocument(initialTheme);
 
-  setConnectionStatus: (status: ConnectionStatus) => {
-    set({ connectionStatus: status });
-  },
+  return {
+    connectionStatus: 'disconnected',
+    stats: { lobsterCount: 0, realLobsterCount: 0, demoLobsterCount: 0, activeDialogues: 0, totalMessages: 0 },
+    focusLobsterId: null,
+    selectedLobsterId: null,
+    selectedTaskId: null,
+    theme: initialTheme,
+    tourStep: 0,
+    tourActive: false,
 
-  setFocusLobster: (id: string | null) => {
-    set({ focusLobsterId: id });
-  },
+    setConnectionStatus: (status: ConnectionStatus) => {
+      set({ connectionStatus: status });
+    },
 
-  setSelectedLobster: (id: string | null) => {
-    set({ selectedLobsterId: id });
-  },
+    setFocusLobster: (id: string | null) => {
+      set({ focusLobsterId: id });
+    },
 
-  setSelectedTask: (id: string | null) => {
-    set({ selectedTaskId: id });
-  },
-});
+    setSelectedLobster: (id: string | null) => {
+      set({ selectedLobsterId: id });
+    },
+
+    setSelectedTask: (id: string | null) => {
+      set({ selectedTaskId: id });
+    },
+
+    toggleTheme: () => {
+      const next: Theme = get().theme === 'dark' ? 'light' : 'dark';
+      applyThemeToDocument(next);
+      try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch { /* noop */ }
+      set({ theme: next });
+    },
+
+    setTourStep: (step: number) => set({ tourStep: step }),
+    startTour: () => set({ tourActive: true, tourStep: 0 }),
+    skipTour: () => set({ tourActive: false, tourStep: -1 }),
+  };
+};

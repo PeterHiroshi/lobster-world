@@ -73,3 +73,41 @@ export interface PlatformEvent {
 // --- Meeting Status (convenience alias) ---
 
 export type MeetingStatus = Meeting['status'];
+
+// --- Collective Memory Types ---
+
+export type MemoryCategory = 'architecture' | 'patterns' | 'bugs' | 'agreements' | 'general';
+
+export interface MemoryEntry {
+  id: string;
+  category: MemoryCategory;
+  title: string;
+  content: string;
+  author: string;
+  createdAt: number;
+  updatedAt: number;
+  tags: string[];
+}
+
+// --- Code Review Types ---
+
+export type CodeSubmissionStatus = 'pending' | 'approved' | 'rejected' | 'changes_requested';
+
+export interface CodeReviewComment {
+  id: string;
+  reviewerId: string;
+  content: string;
+  timestamp: number;
+}
+
+export interface CodeSubmission {
+  id: string;
+  title: string;
+  code: string;
+  language: string;
+  author: string;
+  status: CodeSubmissionStatus;
+  comments: CodeReviewComment[];
+  createdAt: number;
+  updatedAt: number;
+}

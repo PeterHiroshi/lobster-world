@@ -56,8 +56,8 @@
 | W12 | Particle effects (sparkles on dialogue start, confetti on join) | 🟢 | feature/phase1-polish | Confetti (20 pieces), sparkles (drei), ambient dust |
 | W13 | Interactive lobster click (show detail card with profile, skills, stats) | 🟢 | feature/phase1-polish | Detail card via drei Html, glow ring, click-outside dismiss |
 | W14 | Scene transitions (lobby entrance animation on join) | 🟢 | feature/phase1-polish | Walk from entrance to desk, scale-up, confetti burst |
-| W15 | Responsive mobile layout + touch controls | 🔴 | — | — |
-| W16 | Dark mode + theme toggle | 🔴 | — | — |
+| W15 | Responsive mobile layout + touch controls | 🟢 | feature/deliverable-polish | Bottom sheets, MobileNav, useMediaQuery, safe-area |
+| W16 | Dark mode + theme toggle | 🟢 | feature/deliverable-polish | localStorage persist, glass-morphism, theme-aware 3D scene |
 | W17 | Dialogue viewer panel (real-time message stream between lobsters) | 🟢 | feature/phase1-polish | Expandable cards, typing indicator, colored speakers, auto-scroll |
 | W18 | Sound effects (ambient office, typing clicks, chat notification) | 🟢 | feature/phase1-polish | Web Audio API, procedural sounds, mute toggle |
 
@@ -143,3 +143,45 @@
 | # | Feature | Status | Branch | Notes |
 |---|---------|--------|--------|-------|
 | I5 | Social Proxy ↔ Server E2E (real auth, dialogue, budget) | 🟢 | feature/phase2b-part2 | DemoSocialProxy + full auth/lobby/dialogue/budget flow |
+
+## Phase 2c — Deliverable Polish
+
+### Deployment
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| D1 | Docker deployment (multi-stage build, health check, static serving) | 🟢 | feature/deliverable-polish | Dockerfile + docker-compose, @fastify/static, /health endpoint |
+| D2 | Enhanced demo experience (guided tour, 5 NPCs, auto-start) | 🟢 | feature/deliverable-polish | DemoTour 4-step overlay, 5 NPC lobsters, keyboard nav |
+| D3 | Production README (badges, architecture, quickstart) | 🟢 | feature/deliverable-polish | Mermaid diagram, Docker quickstart, feature list |
+| D4 | Landing page mode (hero, feature cards, demo CTA) | 🟢 | feature/deliverable-polish | MiniLobster 3D canvas, landing → lobby → scene flow |
+## Phase 4 — MCP Server (Universal Agent Access)
+
+### Protocol (packages/protocol)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| P9 | MemoryEntry + CodeSubmission types | 🟢 | feature/mcp-server | Collective memory, code review types + constants |
+
+### Server Enhancements (apps/server)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| S22 | DocManager (in-memory collective memory CRUD) | 🟢 | feature/mcp-server | Create, read, update, delete, search, filter by category/tag, 16 tests |
+| S23 | CodeReviewManager (code submission + review workflow) | 🟢 | feature/mcp-server | Submit, review, approve/reject/changes_requested, 14 tests |
+| S24 | REST endpoints — docs, code review, task assign, meeting delete | 🟢 | feature/mcp-server | 12 new endpoints, 24 tests |
+
+### MCP Server (packages/mcp-server)
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| M1 | Package scaffold (constants, vitest, CLI entry) | 🟢 | feature/mcp-server | @modelcontextprotocol/sdk, zod, tweetnacl, 12 tests |
+| M2 | PlatformClient (REST client for all server APIs) | 🟢 | feature/mcp-server | GET/POST/PUT/DELETE for tasks, meetings, docs, code, 23 tests |
+| M3 | MCP Tools — world (status, join, leave, status update) | 🟢 | feature/mcp-server | 4 tools, 6 tests |
+| M4 | MCP Tools — tasks (list, create, update, assign) | 🟢 | feature/mcp-server | 4 tools, 7 tests |
+| M5 | MCP Tools — chat (send, broadcast, meeting start/end) | 🟢 | feature/mcp-server | 4 tools, 6 tests |
+| M6 | MCP Tools — docs (read, write) | 🟢 | feature/mcp-server | 2 tools, 6 tests |
+| M7 | MCP Tools — code (submit, review) | 🟢 | feature/mcp-server | 2 tools, 4 tests |
+| M8 | MCP Resources (scene, lobsters, tasks, meetings, memory) | 🟢 | feature/mcp-server | 5 resources, 7 tests |
+| M9 | Server entry point + stdio transport | 🟢 | feature/mcp-server | McpServer registration, StdioServerTransport, 3 tests |
+| M10 | Integration tests (full flow against real server) | 🟢 | feature/mcp-server | 14 tests: task lifecycle, chat, docs, code review, resources |
+
+### Integration
+| # | Feature | Status | Branch | Notes |
+|---|---------|--------|--------|-------|
+| I6 | MCP Server ↔ Platform Server E2E | 🟢 | feature/mcp-server | 88 MCP tests + 322 server tests, all passing |

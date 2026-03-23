@@ -1,5 +1,9 @@
+import { existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
 import { WebSocketServer } from 'ws';
 import {
   SERVER_PORT,
@@ -19,6 +23,7 @@ import { createLobsterHandler } from './ws/lobster-handler.js';
 import { createViewerHandler } from './ws/viewer-handler.js';
 import { createSocialLobbyHandler } from './ws/social-lobby-handler.js';
 import { registerRoutes } from './api/routes.js';
+import { registerLobsterApiRoutes } from './api/lobster-api.js';
 import { AuditLog } from './engine/audit-log.js';
 import { AuthManager } from './engine/auth.js';
 import { LobbyManager } from './engine/lobby.js';
@@ -28,6 +33,8 @@ import { WorkforceManager } from './engine/workforce.js';
 import { TaskEngine } from './engine/tasks.js';
 import { CommsEngine } from './engine/comms.js';
 import { EventProcessor } from './engine/events.js';
+import { DocManager } from './engine/docs.js';
+import { CodeReviewManager } from './engine/code-review.js';
 
 export interface AppDeps {
   connections: ConnectionManager;
@@ -44,6 +51,8 @@ export interface AppDeps {
   tasks: TaskEngine;
   comms: CommsEngine;
   events: EventProcessor;
+  docs: DocManager;
+  codeReview: CodeReviewManager;
 }
 
 export function createDefaultDeps(): AppDeps {
@@ -63,6 +72,8 @@ export function createDefaultDeps(): AppDeps {
     tasks: new TaskEngine(),
     comms: new CommsEngine(),
     events: new EventProcessor(),
+    docs: new DocManager(),
+    codeReview: new CodeReviewManager(),
   };
 }
 
@@ -105,6 +116,25 @@ export async function createApp(deps?: Partial<AppDeps>): Promise<App> {
   // --- Fastify server ---
   const server = Fastify({ logger: true });
   await server.register(cors, { origin: CORS_ORIGINS });
+
+  // Health check endpoint
+  server.get('/health', async () => ({ status: 'ok', uptime: process.uptime() }));
+
+  // Serve static web build in production
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+  const webDistPath = resolve(currentDir, '../../web/dist');
+  if (existsSync(webDistPath)) {
+    await server.register(fastifyStatic, {
+      root: webDistPath,
+      prefix: '/',
+      wildcard: false,
+    });
+    // SPA fallback: serve index.html for non-API/WS routes
+    server.setNotFoundHandler(async (_req, reply) => {
+      return reply.sendFile('index.html');
+    });
+  }
+
   registerRoutes(server, {
     registry: d.registry,
     scene: d.scene,
@@ -115,6 +145,15 @@ export async function createApp(deps?: Partial<AppDeps>): Promise<App> {
     tasks: d.tasks,
     comms: d.comms,
     events: d.events,
+    docs: d.docs,
+    codeReview: d.codeReview,
+  });
+  registerLobsterApiRoutes(server, {
+    registry: d.registry,
+    scene: d.scene,
+    dialogue: d.dialogue,
+    connections: d.connections,
+    lobbyManager: d.lobbyManager,
   });
 
   // --- WebSocket servers ---

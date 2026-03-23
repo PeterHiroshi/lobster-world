@@ -34,6 +34,7 @@ export function createSocialLobbyHandler(deps: SocialLobbyHandlerDeps) {
 
   const wsToLobsterId = new WeakMap<WebSocket, string>();
   const pendingAuths = new WeakMap<WebSocket, PendingAuth>();
+  const lobsterIdToWs = new Map<string, WebSocket>();
 
   function sendProxy(ws: WebSocket, event: SocialProxyDownstream): void {
     if (ws.readyState === ws.OPEN) {
@@ -77,6 +78,16 @@ export function createSocialLobbyHandler(deps: SocialLobbyHandlerDeps) {
       return;
     }
 
+    // Handle reconnection: clean up previous session for same lobsterId
+    const existingWs = lobsterIdToWs.get(profile.lobsterId);
+    if (existingWs) {
+      connections.removeLobster(profile.lobsterId);
+      scene.removeLobster(profile.lobsterId);
+      registry.unregister(profile.lobsterId);
+      lobby.removeLobster(profile.lobsterId);
+      lobsterIdToWs.delete(profile.lobsterId);
+    }
+
     // Process lobby join
     const joinResult = lobby.processJoinRequest(profile, budgetConfig, permissions);
     if (!joinResult.success) {
@@ -94,9 +105,11 @@ export function createSocialLobbyHandler(deps: SocialLobbyHandlerDeps) {
     };
 
     const lobsterState = registry.register(publicProfile, joinResult.sessionToken ?? '');
+    lobsterState.source = 'plugin';
     connections.addLobster(ws, profile.lobsterId, publicProfile);
     scene.addLobster(lobsterState);
     wsToLobsterId.set(ws, profile.lobsterId);
+    lobsterIdToWs.set(profile.lobsterId, ws);
 
     // Register budget
     budgetEnforcer.registerLobster(profile.lobsterId, budgetConfig);
@@ -188,8 +201,32 @@ export function createSocialLobbyHandler(deps: SocialLobbyHandlerDeps) {
     }
   });
 
+  function handleDisconnect(ws: WebSocket): void {
+    const lobsterId = wsToLobsterId.get(ws);
+    if (!lobsterId) return;
+
+    // Clean up all registrations
+    connections.removeLobster(lobsterId);
+    scene.removeLobster(lobsterId);
+    registry.unregister(lobsterId);
+    lobby.removeLobster(lobsterId);
+    lobsterIdToWs.delete(lobsterId);
+    wsToLobsterId.delete(ws);
+
+    // Broadcast leave to viewers
+    connections.broadcastToViewers({
+      type: 'lobster_leave',
+      lobsterId,
+    });
+
+    auditLog?.log('lobster_leave', [lobsterId], `Lobster disconnected from social proxy`);
+  }
+
   return {
     handleConnection(ws: WebSocket): void {
+      ws.on('close', () => handleDisconnect(ws));
+      ws.on('error', () => handleDisconnect(ws));
+
       ws.on('message', (data: Buffer | string) => {
         let event: SocialProxyUpstream;
         try {

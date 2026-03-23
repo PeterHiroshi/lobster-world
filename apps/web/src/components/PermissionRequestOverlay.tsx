@@ -22,7 +22,7 @@ function PermissionCard({
 }: PermissionCardProps) {
   return (
     <div
-      className="bg-slate-800/95 backdrop-blur-sm border border-slate-600 rounded-lg p-4 shadow-lg w-72 animate-slide-in"
+      className="panel-glass rounded-lg p-4 shadow-lg w-72 animate-slide-in"
       data-testid={`permission-card-${id}`}
     >
       <div className="flex items-center gap-2 mb-2">

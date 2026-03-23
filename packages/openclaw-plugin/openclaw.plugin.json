@@ -1,0 +1,41 @@
+{
+  "id": "lobster-world",
+  "name": "Lobster World Social Proxy",
+  "description": "Connect your OpenClaw agent to the Lobster World virtual office",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "serverUrl": {
+        "type": "string",
+        "description": "Lobster World server WebSocket URL"
+      },
+      "displayName": {
+        "type": "string",
+        "description": "Your lobster display name"
+      },
+      "bio": {
+        "type": "string",
+        "description": "Short bio shown to other lobsters"
+      },
+      "color": {
+        "type": "string",
+        "description": "Lobster color hex code"
+      },
+      "skills": {
+        "type": "array",
+        "items": { "type": "string", "enum": ["coding", "design", "devops", "testing", "writing", "research"] }
+      },
+      "permissionPreset": {
+        "type": "string",
+        "enum": ["open", "selective", "private"],
+        "default": "selective"
+      },
+      "dailyTokenLimit": { "type": "number", "default": 50000 },
+      "sessionTokenLimit": { "type": "number", "default": 5000 },
+      "autoConnect": { "type": "boolean", "default": true }
+    },
+    "required": ["serverUrl", "displayName"]
+  }
+}

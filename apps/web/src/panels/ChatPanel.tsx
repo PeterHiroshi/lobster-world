@@ -104,7 +104,7 @@ const DialogueCard = memo(function DialogueCard({ dialogue }: { dialogue: Active
   );
 });
 
-export function ChatPanel() {
+export function ChatPanel({ embedded }: { embedded?: boolean }) {
   const activeDialogues = useWorldStore((s) => s.activeDialogues);
   const lobsters = useWorldStore((s) => s.lobsters);
   const stats = useWorldStore((s) => s.stats);
@@ -114,48 +114,56 @@ export function ChatPanel() {
     (a, b) => (a.ended ? 1 : 0) - (b.ended ? 1 : 0),
   );
 
+  const content = (
+    <>
+      {dialogueList.length === 0 ? (
+        <div className="opacity-50 text-sm p-3 text-center">
+          {Object.keys(lobsters).length === 0
+            ? 'No lobsters connected'
+            : 'No active conversations'}
+        </div>
+      ) : (
+        dialogueList.map((d) => (
+          <DialogueCard key={d.sessionId} dialogue={d} />
+        ))
+      )}
+
+      {/* Connected lobsters */}
+      <div className="border-t border-slate-300/20 dark:border-gray-700/50 p-2">
+        <div className="opacity-50 text-xs mb-1">
+          Connected ({Object.keys(lobsters).length})
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {Object.values(lobsters).map((l) => (
+            <span
+              key={l.id}
+              className="text-xs bg-slate-200 dark:bg-gray-800 px-1.5 py-0.5 rounded"
+            >
+              {l.profile.name}
+            </span>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
+  if (embedded) return <div className="max-h-80 overflow-y-auto">{content}</div>;
+
   return (
-    <div className="absolute top-14 right-3 z-10 w-80">
+    <div className="absolute top-14 right-3 z-10 w-80 hidden md:block">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-gray-900/80 backdrop-blur text-white px-3 py-2 rounded-t-lg text-sm font-medium flex justify-between items-center hover:bg-gray-800/80 transition-colors"
+        className="w-full panel-glass px-3 py-2 rounded-t-lg text-sm font-medium flex justify-between items-center hover:opacity-90 transition-colors"
       >
         <span>Dialogues</span>
-        <span className="text-gray-400 text-xs">
+        <span className="opacity-50 text-xs">
           {stats.activeDialogues} active {isOpen ? '\u25B2' : '\u25BC'}
         </span>
       </button>
 
       {isOpen && (
-        <div className="bg-gray-900/80 backdrop-blur rounded-b-lg max-h-96 overflow-y-auto">
-          {dialogueList.length === 0 ? (
-            <div className="text-gray-500 text-sm p-3 text-center">
-              {Object.keys(lobsters).length === 0
-                ? 'No lobsters connected'
-                : 'No active conversations'}
-            </div>
-          ) : (
-            dialogueList.map((d) => (
-              <DialogueCard key={d.sessionId} dialogue={d} />
-            ))
-          )}
-
-          {/* Connected lobsters */}
-          <div className="border-t border-gray-700/50 p-2">
-            <div className="text-gray-500 text-xs mb-1">
-              Connected ({Object.keys(lobsters).length})
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {Object.values(lobsters).map((l) => (
-                <span
-                  key={l.id}
-                  className="text-xs bg-gray-800 text-gray-300 px-1.5 py-0.5 rounded"
-                >
-                  {l.profile.name}
-                </span>
-              ))}
-            </div>
-          </div>
+        <div className="panel-glass rounded-b-lg max-h-96 overflow-y-auto border-t-0">
+          {content}
         </div>
       )}
     </div>

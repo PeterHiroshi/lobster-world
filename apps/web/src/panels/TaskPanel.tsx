@@ -40,7 +40,7 @@ export const TaskPanel = memo(function TaskPanel() {
     : undefined;
 
   return (
-    <div className="absolute top-32 right-3 z-10 w-72 bg-gray-900/90 backdrop-blur rounded-lg p-4 text-white">
+    <div className="absolute top-32 right-3 z-10 w-72 panel-glass rounded-lg p-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <h3 className="text-sm font-bold leading-tight">{task.title}</h3>

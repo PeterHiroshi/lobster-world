@@ -16,11 +16,21 @@ import { createUiSlice } from './slices/uiSlice';
 import type { UiSlice } from './slices/uiSlice';
 
 // Re-export types for backward compatibility
-export type { ConnectionStatus, WorldStats } from './slices/uiSlice';
+export type { ConnectionStatus, WorldStats, Theme } from './slices/uiSlice';
 export type { DialogueMessageEntry, ActiveDialogue } from './slices/dialogueSlice';
 export type { LobsterStats, EffectEntry, EntranceAnimation } from './slices/lobsterSlice';
 export type { TeamAgent, TaskCardAnimation } from './slices/taskSlice';
 export type { LobbyState } from './slices/lobbySlice';
+
+function countLobstersBySource(lobsters: Record<string, LobsterState>) {
+  const all = Object.values(lobsters);
+  const realCount = all.filter((l) => l.source === 'plugin' || l.source === 'api').length;
+  return {
+    lobsterCount: all.length,
+    realLobsterCount: realCount,
+    demoLobsterCount: all.length - realCount,
+  };
+}
 
 interface RenderEventHandler {
   handleRenderEvent: (event: RenderEvent) => void;
@@ -46,7 +56,7 @@ export const useWorldStore = create<WorldState>((...a) => {
             lobsters,
             stats: {
               ...get().stats,
-              lobsterCount: Object.keys(lobsters).length,
+              ...countLobstersBySource(lobsters),
             },
           });
           break;
@@ -72,7 +82,7 @@ export const useWorldStore = create<WorldState>((...a) => {
             };
             return {
               lobsters,
-              stats: { ...state.stats, lobsterCount: Object.keys(lobsters).length },
+              stats: { ...state.stats, ...countLobstersBySource(lobsters) },
               effects: [...state.effects, newEffect],
               entranceAnimations: {
                 ...state.entranceAnimations,
@@ -90,7 +100,7 @@ export const useWorldStore = create<WorldState>((...a) => {
             delete lobsters[event.lobsterId];
             return {
               lobsters,
-              stats: { ...state.stats, lobsterCount: Object.keys(lobsters).length },
+              stats: { ...state.stats, ...countLobstersBySource(lobsters) },
               focusLobsterId:
                 state.focusLobsterId === event.lobsterId ? null : state.focusLobsterId,
               selectedLobsterId:
