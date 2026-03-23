@@ -25,6 +25,10 @@ services:
       - HOST=0.0.0.0
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - DATABASE_URL=postgres://lobster:lobster_dev@db:5432/lobster_world
+      - MAX_CONCURRENT_LOBSTERS=${MAX_CONCURRENT_LOBSTERS:-200}
+      - WS_MAX_CONNECTIONS=${WS_MAX_CONNECTIONS:-200}
+      - WS_BATCH_INTERVAL_MS=${WS_BATCH_INTERVAL_MS:-100}
+      - WS_MAX_BATCH_SIZE=${WS_MAX_BATCH_SIZE:-50}
     depends_on:
       db:
         condition: service_healthy
