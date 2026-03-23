@@ -155,7 +155,6 @@ export class PlatformClient {
   private async restDelete<T>(path: string): Promise<T> {
     const response = await fetch(`${this.config.serverUrl}${path}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(REST_TIMEOUT_MS),
     });
     if (!response.ok) {
