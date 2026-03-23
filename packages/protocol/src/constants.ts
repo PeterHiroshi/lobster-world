@@ -160,6 +160,18 @@ export const BUDGET_SESSION_MIN = 100;
 export const BUDGET_SESSION_MAX = 10000;
 export const DEMO_NPC_DELAY_MS = 10000;
 
+// --- Document / Memory Constants ---
+
+export const MAX_DOCS_PER_CATEGORY = 100;
+export const DOC_TITLE_MAX_LENGTH = 200;
+export const DOC_CONTENT_MAX_LENGTH = 50000;
+export const MAX_TAGS_PER_DOC = 10;
+
+// --- Code Review Constants ---
+
+export const MAX_CODE_LENGTH = 100000;
+export const CODE_TITLE_MAX_LENGTH = 200;
+
 // --- Budget Warning Thresholds ---
 
 export const BUDGET_WARNING_THRESHOLD = 0.8;
