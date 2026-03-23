@@ -57,6 +57,11 @@ export const BODY_SEGMENTS_RADIAL = 32;
 export const ENTRANCE_POSITION: [number, number, number] = [0, 0, -10];
 export const ENTRANCE_WALK_SPEED = 0.03;
 
+// LOD (Level of Detail) — imported from protocol for canonical values
+export { LOD_HIGH_DISTANCE, LOD_MEDIUM_DISTANCE } from '@lobster-world/protocol';
+export { LOD_LOW_BODY_SEGMENTS_CAP, LOD_LOW_BODY_SEGMENTS_RADIAL } from '@lobster-world/protocol';
+export { LOD_MEDIUM_BODY_SEGMENTS_CAP, LOD_MEDIUM_BODY_SEGMENTS_RADIAL } from '@lobster-world/protocol';
+export { FRUSTUM_CULL_MARGIN } from '@lobster-world/protocol';
 
 // Status colors
 export const STATUS_COLORS: Record<string, string> = {

@@ -4,6 +4,8 @@ import type { Group, Mesh } from 'three';
 import type { LobsterState, AnimationType } from '@lobster-world/protocol';
 import { LobsterLabel } from './LobsterLabel';
 import { useWorldStore } from '../store/useWorldStore';
+import { useLobsterLOD } from '../hooks/useLobsterLOD';
+import type { LODLevel } from '../hooks/useLobsterLOD';
 import {
   LOBSTER_SCALE,
   POSITION_LERP_FACTOR,
@@ -20,10 +22,31 @@ import {
   BODY_SEGMENTS_CAP,
   BODY_SEGMENTS_RADIAL,
   ENTRANCE_WALK_SPEED,
+  LOD_LOW_BODY_SEGMENTS_CAP,
+  LOD_LOW_BODY_SEGMENTS_RADIAL,
+  LOD_MEDIUM_BODY_SEGMENTS_CAP,
+  LOD_MEDIUM_BODY_SEGMENTS_RADIAL,
 } from '../lib/constants';
 
 interface LobsterProps {
   lobster: LobsterState;
+  lodLevel?: LODLevel;
+}
+
+function getBodySegments(lod: LODLevel): [number, number] {
+  switch (lod) {
+    case 'low': return [LOD_LOW_BODY_SEGMENTS_CAP, LOD_LOW_BODY_SEGMENTS_RADIAL];
+    case 'medium': return [LOD_MEDIUM_BODY_SEGMENTS_CAP, LOD_MEDIUM_BODY_SEGMENTS_RADIAL];
+    default: return [BODY_SEGMENTS_CAP, BODY_SEGMENTS_RADIAL];
+  }
+}
+
+function getEyeSegments(lod: LODLevel): number {
+  switch (lod) {
+    case 'low': return 4;
+    case 'medium': return 8;
+    default: return 12;
+  }
 }
 
 // Generate a stable hash from lobster id for idle variation
@@ -126,7 +149,7 @@ function animateLegs(
   }
 }
 
-export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
+export const Lobster = memo(function Lobster({ lobster, lodLevel = 'high' }: LobsterProps) {
   const groupRef = useRef<Group>(null);
   const bodyGroupRef = useRef<Group>(null);
   const leftClawRef = useRef<Group>(null);
@@ -140,8 +163,12 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
   const entranceAnim = useWorldStore((s) => s.entranceAnimations[lobster.id]);
   const clearEntrance = useWorldStore((s) => s.clearEntrance);
   const { camera } = useThree();
+  const lodState = useLobsterLOD(groupRef);
 
   const idOffset = useMemo(() => idHash(lobster.id), [lobster.id]);
+  const [bodyCap, bodyRadial] = getBodySegments(lodLevel);
+  const eyeSegments = getEyeSegments(lodLevel);
+  const showDetails = lodLevel !== 'low';
 
   // Create refs for 8 legs (4 pairs)
   const legRefs = useMemo(
@@ -217,11 +244,13 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
       idOffset,
     );
 
-    // Animate legs
-    animateLegs(legRefs, effectiveAnimation, time);
+    // Animate legs (skip for low LOD)
+    if (lodState.current.level !== 'low') {
+      animateLegs(legRefs, effectiveAnimation, time);
+    }
 
-    // Eye pupils track camera
-    if (leftPupilRef.current && rightPupilRef.current && groupRef.current) {
+    // Eye pupils track camera (skip for non-high LOD)
+    if (lodState.current.level === 'high' && leftPupilRef.current && rightPupilRef.current && groupRef.current) {
       const camDir = camera.position.clone().sub(groupRef.current.position).normalize();
       const px = camDir.x * PUPIL_TRACK_FACTOR;
       const py = camDir.y * PUPIL_TRACK_FACTOR;
@@ -253,9 +282,9 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
       }}
     >
       <group ref={bodyGroupRef} position={[0, 0.25, 0]}>
-        {/* Body — smoother capsule */}
+        {/* Body — LOD-aware capsule */}
         <mesh castShadow>
-          <capsuleGeometry args={[0.15, 0.3, BODY_SEGMENTS_CAP, BODY_SEGMENTS_RADIAL]} />
+          <capsuleGeometry args={[0.15, 0.3, bodyCap, bodyRadial]} />
           <meshStandardMaterial color={color} roughness={0.4} metalness={0.1} />
         </mesh>
 
@@ -285,8 +314,8 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
           </mesh>
         </group>
 
-        {/* Legs — 4 pairs */}
-        {Array.from({ length: LEG_PAIRS * 2 }, (_, i) => {
+        {/* Legs — 4 pairs (hidden at low LOD) */}
+        {showDetails && Array.from({ length: LEG_PAIRS * 2 }, (_, i) => {
           const pair = Math.floor(i / 2);
           const side = i % 2 === 0 ? -1 : 1;
           const zPos = -0.1 + pair * LEG_SPACING;
@@ -305,28 +334,32 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
           );
         })}
 
-        {/* Left Eye */}
+        {/* Left Eye — LOD-aware segments */}
         <group position={[-0.06, 0.2, 0.1]}>
           <mesh>
-            <sphereGeometry args={[0.04, 12, 12]} />
+            <sphereGeometry args={[0.04, eyeSegments, eyeSegments]} />
             <meshStandardMaterial color="white" />
           </mesh>
-          <mesh ref={leftPupilRef} position={[0, 0, 0.03]}>
-            <sphereGeometry args={[0.02, 8, 8]} />
-            <meshStandardMaterial color="black" />
-          </mesh>
+          {showDetails && (
+            <mesh ref={leftPupilRef} position={[0, 0, 0.03]}>
+              <sphereGeometry args={[0.02, eyeSegments, eyeSegments]} />
+              <meshStandardMaterial color="black" />
+            </mesh>
+          )}
         </group>
 
-        {/* Right Eye */}
+        {/* Right Eye — LOD-aware segments */}
         <group position={[0.06, 0.2, 0.1]}>
           <mesh>
-            <sphereGeometry args={[0.04, 12, 12]} />
+            <sphereGeometry args={[0.04, eyeSegments, eyeSegments]} />
             <meshStandardMaterial color="white" />
           </mesh>
-          <mesh ref={rightPupilRef} position={[0, 0, 0.03]}>
-            <sphereGeometry args={[0.02, 8, 8]} />
-            <meshStandardMaterial color="black" />
-          </mesh>
+          {showDetails && (
+            <mesh ref={rightPupilRef} position={[0, 0, 0.03]}>
+              <sphereGeometry args={[0.02, eyeSegments, eyeSegments]} />
+              <meshStandardMaterial color="black" />
+            </mesh>
+          )}
         </group>
 
         {/* Tail */}
@@ -335,17 +368,19 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
           <meshStandardMaterial color={color} roughness={0.4} />
         </mesh>
 
-        {/* Left Antenna */}
-        <mesh position={[-0.04, 0.3, 0.08]} rotation={[0.3, 0, -0.3]}>
-          <cylinderGeometry args={[0.008, 0.005, 0.15, 4]} />
-          <meshStandardMaterial color={color} />
-        </mesh>
-
-        {/* Right Antenna */}
-        <mesh position={[0.04, 0.3, 0.08]} rotation={[0.3, 0, 0.3]}>
-          <cylinderGeometry args={[0.008, 0.005, 0.15, 4]} />
-          <meshStandardMaterial color={color} />
-        </mesh>
+        {/* Antennae — hidden at low LOD */}
+        {showDetails && (
+          <>
+            <mesh position={[-0.04, 0.3, 0.08]} rotation={[0.3, 0, -0.3]}>
+              <cylinderGeometry args={[0.008, 0.005, 0.15, 4]} />
+              <meshStandardMaterial color={color} />
+            </mesh>
+            <mesh position={[0.04, 0.3, 0.08]} rotation={[0.3, 0, 0.3]}>
+              <cylinderGeometry args={[0.008, 0.005, 0.15, 4]} />
+              <meshStandardMaterial color={color} />
+            </mesh>
+          </>
+        )}
       </group>
 
       {/* Selection glow ring */}
