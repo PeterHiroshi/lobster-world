@@ -11,6 +11,10 @@ import type {
   AgentMessage,
   LobsterState,
   Scene,
+  A2AMessage,
+  A2AMessageType,
+  A2AStats,
+  A2APayloadMap,
 } from '@lobster-world/protocol';
 import { REST_TIMEOUT_MS } from './constants.js';
 
@@ -268,5 +272,34 @@ export class PlatformClient {
   async getCodeSubmissions(filters?: { status?: CodeSubmissionStatus; author?: string }): Promise<CodeSubmission[]> {
     const query = filters ? this.buildQuery(filters) : '';
     return this.restGet<CodeSubmission[]>(`/api/code/submissions${query}`);
+  }
+
+  // --- A2A (Agent-to-Agent) ---
+
+  async a2aSend(opts: {
+    type: A2AMessageType;
+    from: string;
+    to: string | string[];
+    payload: A2APayloadMap[A2AMessageType];
+    correlationId?: string;
+    ttl?: number;
+  }): Promise<A2AMessage> {
+    return this.restPost<A2AMessage>('/api/a2a/send', opts);
+  }
+
+  async a2aGetPending(agentId: string): Promise<A2AMessage[]> {
+    return this.restGet<A2AMessage[]>(`/api/a2a/pending/${agentId}`);
+  }
+
+  async a2aAck(messageId: string, agentId: string): Promise<{ acked: boolean }> {
+    return this.restPost<{ acked: boolean }>(`/api/a2a/ack/${messageId}`, { agentId });
+  }
+
+  async a2aGetChain(correlationId: string): Promise<A2AMessage[]> {
+    return this.restGet<A2AMessage[]>(`/api/a2a/chain/${correlationId}`);
+  }
+
+  async a2aGetStats(): Promise<A2AStats> {
+    return this.restGet<A2AStats>('/api/a2a/stats');
   }
 }
