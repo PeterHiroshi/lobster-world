@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import type { TaskStatus, TaskPriority, MessageType, MemoryCategory, CodeSubmissionStatus, A2AMessageType } from '@lobster-world/protocol';
+import type { TaskStatus, TaskPriority, MessageType, MemoryCategory, CodeSubmissionStatus, A2AMessageType, LobsterSkin } from '@lobster-world/protocol';
 import type { LobsterRegistry } from '../engine/registry.js';
 import type { SceneEngine } from '../engine/scene.js';
 import type { DialogueRouter } from '../engine/dialogue.js';
@@ -481,4 +481,49 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       return keyStore.getAll();
     });
   }
+
+  // --- Customization routes ---
+
+  app.post('/api/lobsters/:id/customize', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as { skin?: LobsterSkin };
+    if (!body.skin || !body.skin.bodyColor) {
+      return reply.status(400).send({ error: 'skin with bodyColor is required' });
+    }
+    const updated = registry.updateSkin(id, body.skin);
+    if (!updated) {
+      return reply.status(400).send({ error: 'Lobster not found or invalid skin data' });
+    }
+    return updated;
+  });
+
+  app.get('/api/lobsters/:id/skins', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    if (!registry.isRegistered(id)) {
+      return reply.status(404).send({ error: 'Lobster not found' });
+    }
+    return registry.getCustomizationPresets(id);
+  });
+
+  app.post('/api/lobsters/:id/skins', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as { skin?: LobsterSkin };
+    if (!body.skin || !body.skin.bodyColor || !body.skin.id) {
+      return reply.status(400).send({ error: 'skin with id and bodyColor is required' });
+    }
+    const saved = registry.savePreset(id, body.skin);
+    if (!saved) {
+      return reply.status(400).send({ error: 'Lobster not found, invalid skin, or preset limit reached' });
+    }
+    return reply.status(201).send({ saved: true });
+  });
+
+  app.delete('/api/lobsters/:id/skins/:skinId', async (request, reply) => {
+    const { id, skinId } = request.params as { id: string; skinId: string };
+    const deleted = registry.deletePreset(id, skinId);
+    if (!deleted) {
+      return reply.status(404).send({ error: 'Preset not found' });
+    }
+    return { deleted: true };
+  });
 }
