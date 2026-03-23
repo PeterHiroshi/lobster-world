@@ -8,6 +8,7 @@ export interface DialogueMessageEntry {
   content: string;
   turnNumber: number;
   timestamp: number;
+  encrypted?: boolean;
 }
 
 export interface ActiveDialogue {
@@ -19,6 +20,7 @@ export interface ActiveDialogue {
   messages: DialogueMessageEntry[];
   ended: boolean;
   endReason?: string;
+  encrypted?: boolean;
 }
 
 export interface DialogueSlice {

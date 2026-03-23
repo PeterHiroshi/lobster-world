@@ -6,8 +6,10 @@ import { createChatTools } from './tools/chat.js';
 import { createDocsTools } from './tools/docs.js';
 import { createCodeTools } from './tools/code.js';
 import { createA2ATools } from './tools/a2a.js';
+import { createCryptoTools } from './tools/crypto.js';
 import { createResources } from './resources/scene.js';
 import { createA2AResources } from './resources/a2a.js';
+import { createCryptoResources } from './resources/crypto.js';
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from './constants.js';
 import type { ToolDefinition } from './tools/world.js';
 import type { ResourceDefinition } from './resources/scene.js';
@@ -33,6 +35,7 @@ export function createLobsterMcpServer(config: LobsterMcpServerConfig): {
     ...createDocsTools(client),
     ...createCodeTools(client),
     ...createA2ATools(client),
+    ...createCryptoTools(client),
   ];
 
   // Register each tool with the MCP server
@@ -55,6 +58,7 @@ export function createLobsterMcpServer(config: LobsterMcpServerConfig): {
   const allResources: ResourceDefinition[] = [
     ...createResources(client),
     ...createA2AResources(client),
+    ...createCryptoResources(client),
   ];
 
   // Register each resource with the MCP server

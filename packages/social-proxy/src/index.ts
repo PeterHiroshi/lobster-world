@@ -11,3 +11,5 @@ export { PermissionGate } from './permissions.js';
 export type { PermissionDecision, PermissionResult } from './permissions.js';
 export { BudgetCounter } from './budget.js';
 export type { BudgetWarning } from './budget.js';
+export { E2EEncryptionManager } from './e2e-encryption.js';
+export type { SessionKeyState } from './e2e-encryption.js';

@@ -12,6 +12,7 @@ import type { EventProcessor } from '../engine/events.js';
 import type { DocManager } from '../engine/docs.js';
 import type { CodeReviewManager } from '../engine/code-review.js';
 import type { A2ARouter } from '../engine/a2a-router.js';
+import type { KeyStore } from '../engine/key-store.js';
 
 export interface RoutesDeps {
   registry: LobsterRegistry;
@@ -26,10 +27,11 @@ export interface RoutesDeps {
   docs?: DocManager;
   codeReview?: CodeReviewManager;
   a2aRouter?: A2ARouter;
+  keyStore?: KeyStore;
 }
 
 export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
-  const { registry, scene, dialogue, connections, auditLog, workforce, tasks, comms, events, docs, codeReview, a2aRouter } = deps;
+  const { registry, scene, dialogue, connections, auditLog, workforce, tasks, comms, events, docs, codeReview, a2aRouter, keyStore } = deps;
 
   // --- Existing routes ---
 
@@ -451,6 +453,32 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
 
     app.get('/api/a2a/stats', async () => {
       return await a2aRouter.getStats();
+    });
+  }
+
+  // --- Crypto / Key Exchange routes ---
+
+  if (keyStore) {
+    app.post('/api/crypto/keys', async (request, reply) => {
+      const body = request.body as { lobsterId?: string; x25519PublicKey?: string };
+      if (!body.lobsterId || !body.x25519PublicKey) {
+        return reply.status(400).send({ error: 'lobsterId and x25519PublicKey are required' });
+      }
+      const record = keyStore.store(body.lobsterId, body.x25519PublicKey);
+      return reply.status(201).send(record);
+    });
+
+    app.get('/api/crypto/keys/:lobsterId', async (request, reply) => {
+      const { lobsterId } = request.params as { lobsterId: string };
+      const record = keyStore.get(lobsterId);
+      if (!record) {
+        return reply.status(404).send({ error: 'Public key not found' });
+      }
+      return record;
+    });
+
+    app.get('/api/crypto/keys', async () => {
+      return keyStore.getAll();
     });
   }
 }

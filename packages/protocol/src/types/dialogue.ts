@@ -16,6 +16,7 @@ export interface DialogueSession {
   startedAt: number;
   lastActivityAt: number;
   status: DialogueStatus;
+  encrypted?: boolean;
 }
 
 export interface DialogueMessage {

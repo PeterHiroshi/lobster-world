@@ -10,6 +10,17 @@
   },
   "scripts": {
     "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
     "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
   }
 }
