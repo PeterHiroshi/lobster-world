@@ -461,4 +461,40 @@ describe('useWorldStore', () => {
     useWorldStore.getState().handleRenderEvent({ type: 'budget_status', status });
     expect(useWorldStore.getState().budgetStatus).toEqual(status);
   });
+
+  it('should handle render_batch by processing all sub-events', () => {
+    const l1 = makeLobster({ id: 'batch-1', profile: { id: 'batch-1', name: 'B1', color: '#ff0000', skills: [] } });
+    const l2 = makeLobster({ id: 'batch-2', profile: { id: 'batch-2', name: 'B2', color: '#00ff00', skills: [] } });
+
+    const batchEvent: RenderEvent = {
+      type: 'render_batch',
+      events: [
+        { type: 'lobster_join', lobster: l1 },
+        { type: 'lobster_join', lobster: l2 },
+      ],
+    };
+
+    useWorldStore.getState().handleRenderEvent(batchEvent);
+
+    const state = useWorldStore.getState();
+    expect(state.lobsters['batch-1']).toBeDefined();
+    expect(state.lobsters['batch-2']).toBeDefined();
+    expect(state.stats.lobsterCount).toBe(2);
+  });
+
+  it('should handle render_batch with mixed event types', () => {
+    const l1 = makeLobster({ id: 'mix-1', profile: { id: 'mix-1', name: 'M1', color: '#ff0000', skills: [] } });
+    useWorldStore.getState().handleRenderEvent({ type: 'lobster_join', lobster: l1 });
+
+    const batchEvent: RenderEvent = {
+      type: 'render_batch',
+      events: [
+        { type: 'lobster_update', lobsterId: 'mix-1', delta: { animation: 'walking' } },
+        { type: 'lobster_leave', lobsterId: 'mix-1' },
+      ],
+    };
+
+    useWorldStore.getState().handleRenderEvent(batchEvent);
+    expect(useWorldStore.getState().lobsters['mix-1']).toBeUndefined();
+  });
 });

@@ -405,6 +405,12 @@ export const useWorldStore = create<WorldState>((...a) => {
           });
           break;
         }
+        case 'render_batch': {
+          for (const subEvent of event.events) {
+            get().handleRenderEvent(subEvent);
+          }
+          break;
+        }
       }
     },
   };
