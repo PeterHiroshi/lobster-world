@@ -33,6 +33,8 @@ import { WorkforceManager } from './engine/workforce.js';
 import { TaskEngine } from './engine/tasks.js';
 import { CommsEngine } from './engine/comms.js';
 import { EventProcessor } from './engine/events.js';
+import { DocManager } from './engine/docs.js';
+import { CodeReviewManager } from './engine/code-review.js';
 
 export interface AppDeps {
   connections: ConnectionManager;
@@ -49,6 +51,8 @@ export interface AppDeps {
   tasks: TaskEngine;
   comms: CommsEngine;
   events: EventProcessor;
+  docs: DocManager;
+  codeReview: CodeReviewManager;
 }
 
 export function createDefaultDeps(): AppDeps {
@@ -68,6 +72,8 @@ export function createDefaultDeps(): AppDeps {
     tasks: new TaskEngine(),
     comms: new CommsEngine(),
     events: new EventProcessor(),
+    docs: new DocManager(),
+    codeReview: new CodeReviewManager(),
   };
 }
 
@@ -139,6 +145,8 @@ export async function createApp(deps?: Partial<AppDeps>): Promise<App> {
     tasks: d.tasks,
     comms: d.comms,
     events: d.events,
+    docs: d.docs,
+    codeReview: d.codeReview,
   });
   registerLobsterApiRoutes(server, {
     registry: d.registry,
