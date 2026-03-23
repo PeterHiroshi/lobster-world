@@ -22,7 +22,7 @@ vi.mock('@react-three/drei', () => ({
 describe('StatsPanel', () => {
   beforeEach(() => {
     useWorldStore.setState({
-      stats: { lobsterCount: 3, activeDialogues: 1, totalMessages: 42 },
+      stats: { lobsterCount: 3, realLobsterCount: 0, demoLobsterCount: 3, activeDialogues: 1, totalMessages: 42 },
     });
   });
 

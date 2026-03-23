@@ -82,7 +82,7 @@ export class LobsterWorldPlugin extends EventEmitter {
 
     // Wire event mapper to client state updates
     this.eventMapper.onStateUpdate((behavior) => {
-      this.client?.sendStateUpdate(behavior);
+      this.client?.sendStateUpdate({ ...behavior });
     });
 
     if (this.resolvedConfig.autoConnect) {

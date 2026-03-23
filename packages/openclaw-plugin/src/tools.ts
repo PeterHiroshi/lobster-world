@@ -1,12 +1,12 @@
 import type { SocialProxyClient } from './client.js';
 
-interface ToolResult {
+export interface ToolResult {
   success: boolean;
   data?: Record<string, unknown> | Array<Record<string, unknown>>;
   error?: string;
 }
 
-interface AgentTool {
+export interface AgentTool {
   name: string;
   description: string;
   execute: (params: Record<string, unknown>) => Promise<ToolResult>;

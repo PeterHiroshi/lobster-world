@@ -18,7 +18,7 @@ describe('DemoScenario', () => {
       activeDialogues: {},
       budgetStatus: null,
       lobsters: {},
-      stats: { lobsterCount: 0, activeDialogues: 0, totalMessages: 0 },
+      stats: { lobsterCount: 0, realLobsterCount: 0, demoLobsterCount: 0, activeDialogues: 0, totalMessages: 0 },
       lobsterStats: {},
       effects: [],
     });

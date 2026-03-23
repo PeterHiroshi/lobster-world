@@ -43,7 +43,7 @@ describe('useWorldStore', () => {
       lobsters: {},
       dialogues: [],
       connectionStatus: 'disconnected',
-      stats: { lobsterCount: 0, activeDialogues: 0, totalMessages: 0 },
+      stats: { lobsterCount: 0, realLobsterCount: 0, demoLobsterCount: 0, activeDialogues: 0, totalMessages: 0 },
       focusLobsterId: null,
       selectedLobsterId: null,
       lobsterStats: {},
@@ -79,7 +79,7 @@ describe('useWorldStore', () => {
 
   it('handles lobster_leave', () => {
     const lobster = makeLobster();
-    useWorldStore.setState({ lobsters: { 'lobster-1': lobster }, stats: { lobsterCount: 1, activeDialogues: 0, totalMessages: 0 } });
+    useWorldStore.setState({ lobsters: { 'lobster-1': lobster }, stats: { lobsterCount: 1, realLobsterCount: 0, demoLobsterCount: 1, activeDialogues: 0, totalMessages: 0 } });
 
     const event: RenderEvent = { type: 'lobster_leave', lobsterId: 'lobster-1' };
     useWorldStore.getState().handleRenderEvent(event);
@@ -171,7 +171,7 @@ describe('useWorldStore', () => {
     useWorldStore.setState({
       lobsters: { 'lobster-1': lobster },
       focusLobsterId: 'lobster-1',
-      stats: { lobsterCount: 1, activeDialogues: 0, totalMessages: 0 },
+      stats: { lobsterCount: 1, realLobsterCount: 0, demoLobsterCount: 1, activeDialogues: 0, totalMessages: 0 },
     });
 
     useWorldStore.getState().handleRenderEvent({ type: 'lobster_leave', lobsterId: 'lobster-1' });
@@ -193,7 +193,7 @@ describe('useWorldStore', () => {
     useWorldStore.setState({
       lobsters: { 'lobster-1': lobster },
       selectedLobsterId: 'lobster-1',
-      stats: { lobsterCount: 1, activeDialogues: 0, totalMessages: 0 },
+      stats: { lobsterCount: 1, realLobsterCount: 0, demoLobsterCount: 1, activeDialogues: 0, totalMessages: 0 },
     });
 
     useWorldStore.getState().handleRenderEvent({ type: 'lobster_leave', lobsterId: 'lobster-1' });
@@ -268,7 +268,7 @@ describe('useWorldStore', () => {
           ended: false,
         },
       },
-      stats: { lobsterCount: 2, activeDialogues: 1, totalMessages: 0 },
+      stats: { lobsterCount: 2, realLobsterCount: 0, demoLobsterCount: 2, activeDialogues: 1, totalMessages: 0 },
     });
 
     const event: RenderEvent = {
