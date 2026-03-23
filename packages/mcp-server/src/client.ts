@@ -15,6 +15,8 @@ import type {
   A2AMessageType,
   A2AStats,
   A2APayloadMap,
+  PublicKeyRecord,
+  DialogueSession,
 } from '@lobster-world/protocol';
 import { REST_TIMEOUT_MS } from './constants.js';
 
@@ -301,5 +303,23 @@ export class PlatformClient {
 
   async a2aGetStats(): Promise<A2AStats> {
     return this.restGet<A2AStats>('/api/a2a/stats');
+  }
+
+  // --- Crypto / Key Exchange ---
+
+  async storePublicKey(lobsterId: string, x25519PublicKey: string): Promise<PublicKeyRecord> {
+    return this.restPost<PublicKeyRecord>('/api/crypto/keys', { lobsterId, x25519PublicKey });
+  }
+
+  async getPublicKey(lobsterId: string): Promise<PublicKeyRecord> {
+    return this.restGet<PublicKeyRecord>(`/api/crypto/keys/${lobsterId}`);
+  }
+
+  async getAllPublicKeys(): Promise<PublicKeyRecord[]> {
+    return this.restGet<PublicKeyRecord[]>('/api/crypto/keys');
+  }
+
+  async getDialogues(): Promise<DialogueSession[]> {
+    return this.restGet<DialogueSession[]>('/api/dialogues');
   }
 }
