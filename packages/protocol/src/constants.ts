@@ -187,6 +187,12 @@ export const A2A_CORRELATION_TIMEOUT_S = 3600;
 export const A2A_CLEANUP_INTERVAL_MS = 60000;
 export const A2A_MAX_PENDING_PER_AGENT = 100;
 
+// --- E2E Encryption Constants ---
+
+export const CRYPTO_NONCE_LENGTH = 24;
+export const CRYPTO_KEY_LENGTH = 32;
+export const CRYPTO_MAX_PLAINTEXT_SIZE = 8192;
+
 // --- API Constants ---
 
 export const API_RATE_LIMIT_PER_MIN = 100;
