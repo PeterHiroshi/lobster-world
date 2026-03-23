@@ -36,6 +36,7 @@ import { EventProcessor } from './engine/events.js';
 import { DocManager } from './engine/docs.js';
 import { CodeReviewManager } from './engine/code-review.js';
 import { A2ARouter } from './engine/a2a-router.js';
+import { SceneEventBatcher } from './engine/event-batcher.js';
 import type { DatabaseConnection } from './db/connection.js';
 import { createDatabaseConnection } from './db/connection.js';
 import { PgTaskRepo } from './db/repositories/task-repo.js';
@@ -204,19 +205,25 @@ export async function createApp(deps?: Partial<AppDeps>, dbConnection?: Database
   viewerWss.on('connection', (ws) => viewerHandler.handleConnection(ws));
   socialWss.on('connection', (ws) => socialLobbyHandler.handleConnection(ws));
 
-  // --- Broadcast loop ---
+  // --- Event batcher + broadcast loop ---
+  const eventBatcher = new SceneEventBatcher((event) => {
+    d.connections.broadcastToViewers(event);
+  });
+
   let broadcastTimer: ReturnType<typeof setInterval> | null = null;
 
   function startBroadcastLoop(): void {
     broadcastTimer = setInterval(() => {
       const events = d.scene.getPendingEvents();
-      for (const event of events) {
-        d.connections.broadcastToViewers(event);
+      if (events.length > 0) {
+        eventBatcher.queueEvents(events);
       }
     }, SCENE_UPDATE_INTERVAL_MS);
+    eventBatcher.start();
   }
 
   function stopBroadcastLoop(): void {
+    eventBatcher.stop();
     if (broadcastTimer !== null) {
       clearInterval(broadcastTimer);
       broadcastTimer = null;

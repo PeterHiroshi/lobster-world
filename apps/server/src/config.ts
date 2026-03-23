@@ -6,6 +6,9 @@ import {
   AUDIT_RING_BUFFER_SIZE,
   MOCK_DIALOGUE_INTERVAL_MIN_MS,
   MOCK_DIALOGUE_INTERVAL_MAX_MS,
+  WS_MAX_CONNECTIONS,
+  WS_BATCH_INTERVAL_MS,
+  WS_MAX_BATCH_SIZE,
 } from '@lobster-world/protocol';
 
 // Re-export protocol constants for convenience
@@ -17,6 +20,9 @@ export {
   AUDIT_RING_BUFFER_SIZE,
   MOCK_DIALOGUE_INTERVAL_MIN_MS,
   MOCK_DIALOGUE_INTERVAL_MAX_MS,
+  WS_MAX_CONNECTIONS,
+  WS_BATCH_INTERVAL_MS,
+  WS_MAX_BATCH_SIZE,
 };
 
 // Server-specific constants
