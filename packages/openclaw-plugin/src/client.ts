@@ -127,6 +127,7 @@ export class SocialProxyClient extends EventEmitter {
 
     this.ws.on('open', () => {
       this.setState('authenticating');
+      this.sendInitialJoin();
     });
 
     this.ws.on('message', (data: string | Buffer) => {
@@ -189,6 +190,28 @@ export class SocialProxyClient extends EventEmitter {
         this.emit('reconnected', msg);
         break;
     }
+  }
+
+  private sendInitialJoin(): void {
+    const profile = this.buildProfile();
+    const budgetConfig = this.buildBudgetConfig();
+    const permissions = this.buildPermissions();
+
+    const joinRequest: SocialProxyUpstream = {
+      type: 'lobby_join',
+      request: {
+        auth: {
+          lobsterId: this.lobsterId,
+          publicKey: this.keypair.publicKey,
+          signature: '', // Empty signature triggers challenge
+        },
+        profile,
+        budgetConfig,
+        permissions,
+      },
+    };
+
+    this.send(joinRequest);
   }
 
   private handleAuthChallenge(nonce: string): void {

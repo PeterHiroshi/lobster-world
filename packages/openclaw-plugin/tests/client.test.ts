@@ -105,25 +105,32 @@ describe('SocialProxyClient', () => {
       expect(wsInstances).toHaveLength(1);
     });
 
-    it('sends lobby_join after receiving auth_challenge', async () => {
+    it('sends initial unsigned lobby_join then signed lobby_join after auth_challenge', async () => {
       const client = new SocialProxyClient(TEST_CONFIG, createMockWsFactory());
       client.connect();
 
       await vi.advanceTimersByTimeAsync(20);
       const ws = wsInstances[0];
 
+      // Initial join with empty signature
+      expect(ws.sent).toHaveLength(1);
+      const initialMsg = JSON.parse(ws.sent[0]);
+      expect(initialMsg.type).toBe('lobby_join');
+      expect(initialMsg.request.auth.signature).toBe('');
+
       ws.simulateMessage({
         type: 'auth_challenge',
         challenge: { nonce: 'test-nonce-123', timestamp: Date.now() },
       });
 
-      // Should have sent a lobby_join
-      expect(ws.sent).toHaveLength(1);
-      const msg = JSON.parse(ws.sent[0]);
-      expect(msg.type).toBe('lobby_join');
-      expect(msg.request.auth.publicKey).toBeDefined();
-      expect(msg.request.auth.signature).toBeDefined();
-      expect(msg.request.profile.displayName).toBe('TestBot');
+      // Should have sent a signed lobby_join
+      expect(ws.sent).toHaveLength(2);
+      const signedMsg = JSON.parse(ws.sent[1]);
+      expect(signedMsg.type).toBe('lobby_join');
+      expect(signedMsg.request.auth.publicKey).toBeDefined();
+      expect(signedMsg.request.auth.signature).toBeDefined();
+      expect(signedMsg.request.auth.signature.length).toBeGreaterThan(0);
+      expect(signedMsg.request.profile.displayName).toBe('TestBot');
     });
 
     it('transitions to joined after successful lobby_result', async () => {
