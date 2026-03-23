@@ -405,6 +405,51 @@ export const useWorldStore = create<WorldState>((...a) => {
           });
           break;
         }
+        case 'dialogue_encrypted': {
+          set((state) => {
+            const dialogue = state.activeDialogues[event.sessionId];
+            if (!dialogue) return state;
+            return {
+              activeDialogues: {
+                ...state.activeDialogues,
+                [event.sessionId]: { ...dialogue, encrypted: true },
+              },
+            };
+          });
+          break;
+        }
+        case 'encrypted_dialogue_msg': {
+          set((state) => {
+            const dialogue = state.activeDialogues[event.sessionId];
+            if (!dialogue) return state;
+
+            const newMessage: DialogueMessageEntry = {
+              fromId: event.fromId,
+              fromName: event.fromName,
+              fromColor: event.fromColor,
+              content: '[Encrypted message]',
+              turnNumber: event.turnNumber,
+              timestamp: Date.now(),
+              encrypted: true,
+            };
+
+            const lobsterStats = { ...state.lobsterStats };
+            const existing = lobsterStats[event.fromId] ?? { messagesSent: 0, dialoguesParticipated: 0 };
+            lobsterStats[event.fromId] = { ...existing, messagesSent: existing.messagesSent + 1 };
+
+            return {
+              activeDialogues: {
+                ...state.activeDialogues,
+                [event.sessionId]: {
+                  ...dialogue,
+                  messages: [...dialogue.messages, newMessage],
+                },
+              },
+              lobsterStats,
+            };
+          });
+          break;
+        }
       }
     },
   };
