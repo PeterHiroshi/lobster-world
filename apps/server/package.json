@@ -16,13 +16,17 @@
     "@fastify/cors": "^11.2.0",
     "@fastify/static": "^9.0.0",
     "@lobster-world/protocol": "workspace:*",
+    "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.45.1",
     "fastify": "^5.3.3",
+    "postgres": "^3.4.8",
     "tweetnacl": "^1.0.3",
     "ws": "^8.18.1"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
     "@types/ws": "^8.18.1",
+    "drizzle-kit": "^0.31.10",
     "tsup": "^8.5.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",

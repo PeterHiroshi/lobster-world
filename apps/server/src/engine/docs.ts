@@ -1,76 +1,57 @@
 import type { MemoryEntry, MemoryCategory } from '@lobster-world/protocol';
+import type { DocRepository, CreateDocOpts } from '../db/repositories/doc-repo.js';
+import { InMemoryDocRepo } from '../db/repositories/doc-repo.js';
 
-export interface CreateDocOpts {
-  category: MemoryCategory;
-  title: string;
-  content: string;
-  author: string;
-  tags: string[];
-}
+export type { CreateDocOpts } from '../db/repositories/doc-repo.js';
 
 export class DocManager {
-  private docs: Map<string, MemoryEntry> = new Map();
-  private nextId: number = 1;
+  private repo: DocRepository;
 
-  createDoc(opts: CreateDocOpts): MemoryEntry {
-    const id = `doc-${this.nextId++}`;
-    const now = Date.now();
-    const doc: MemoryEntry = {
-      id,
-      category: opts.category,
-      title: opts.title,
-      content: opts.content,
-      author: opts.author,
-      tags: [...opts.tags],
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.docs.set(id, doc);
-    return doc;
+  constructor(repo?: DocRepository) {
+    this.repo = repo ?? new InMemoryDocRepo();
   }
 
-  getDoc(id: string): MemoryEntry | undefined {
-    return this.docs.get(id);
+  async createDoc(opts: CreateDocOpts): Promise<MemoryEntry> {
+    return this.repo.create(opts);
   }
 
-  getAllDocs(): MemoryEntry[] {
-    return [...this.docs.values()];
+  async getDoc(id: string): Promise<MemoryEntry | undefined> {
+    return this.repo.getById(id);
   }
 
-  updateDoc(
+  async getAllDocs(): Promise<MemoryEntry[]> {
+    return this.repo.getAll();
+  }
+
+  async updateDoc(
     id: string,
     partial: Partial<Pick<MemoryEntry, 'title' | 'content' | 'tags' | 'category'>>,
-  ): MemoryEntry | undefined {
-    const doc = this.docs.get(id);
-    if (!doc) return undefined;
-    if (partial.title !== undefined) doc.title = partial.title;
-    if (partial.content !== undefined) doc.content = partial.content;
-    if (partial.tags !== undefined) doc.tags = [...partial.tags];
-    if (partial.category !== undefined) doc.category = partial.category;
-    doc.updatedAt = Date.now();
-    return doc;
+  ): Promise<MemoryEntry | undefined> {
+    return this.repo.update(id, partial);
   }
 
-  deleteDoc(id: string): boolean {
-    return this.docs.delete(id);
+  async deleteDoc(id: string): Promise<boolean> {
+    return this.repo.delete(id);
   }
 
-  getDocsByCategory(category: MemoryCategory): MemoryEntry[] {
-    return this.getAllDocs().filter((d) => d.category === category);
+  async getDocsByCategory(category: MemoryCategory): Promise<MemoryEntry[]> {
+    return this.repo.getByCategory(category);
   }
 
-  getDocsByTag(tag: string): MemoryEntry[] {
-    return this.getAllDocs().filter((d) => d.tags.includes(tag));
+  async getDocsByTag(tag: string): Promise<MemoryEntry[]> {
+    const all = await this.repo.getAll();
+    return all.filter((d) => d.tags.includes(tag));
   }
 
-  searchDocs(query: string): MemoryEntry[] {
+  async searchDocs(query: string): Promise<MemoryEntry[]> {
     const lowerQuery = query.toLowerCase();
-    return this.getAllDocs().filter(
+    const all = await this.repo.getAll();
+    return all.filter(
       (d) => d.title.toLowerCase().includes(lowerQuery) || d.content.toLowerCase().includes(lowerQuery),
     );
   }
 
-  getDocCount(): number {
-    return this.docs.size;
+  async getDocCount(): Promise<number> {
+    return this.repo.count();
   }
 }

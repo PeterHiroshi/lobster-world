@@ -1,8 +1,19 @@
-import { createApp } from './app.js';
+import 'dotenv/config';
+import { createApp, createPgDeps } from './app.js';
 import { startTeamScenario } from './mock/mock-team.js';
 import { SERVER_PORT } from './config.js';
 
-const app = await createApp();
+const databaseUrl = process.env.DATABASE_URL;
+
+let app;
+if (databaseUrl) {
+  const { deps, dbConnection } = await createPgDeps(databaseUrl);
+  app = await createApp(deps, dbConnection);
+  app.server.log.info('PostgreSQL persistence enabled');
+} else {
+  app = await createApp();
+  app.server.log.info('Running with in-memory storage (no DATABASE_URL set)');
+}
 
 // Start team scenario (5 agents with project lifecycle)
 const serverUrl = `ws://localhost:${SERVER_PORT}`;

@@ -11,15 +11,19 @@ import {
   A2A_CORRELATION_TIMEOUT_S,
   A2A_MAX_PENDING_PER_AGENT,
 } from '@lobster-world/protocol';
+import type { A2ARepository } from '../db/repositories/a2a-repo.js';
+import { InMemoryA2ARepo } from '../db/repositories/a2a-repo.js';
 
 export class A2ARouter {
-  private messages: Map<string, A2AMessage> = new Map();
-  private pending: Map<string, A2AMessage[]> = new Map(); // agentId -> pending msgs
-  private correlations: Map<string, A2AMessage[]> = new Map(); // correlationId -> chain
-  private nextId: number = 1;
+  private repo: A2ARepository;
+  private nextId = 1;
 
-  sendMessage(request: A2ASendRequest): A2AMessage {
-    this.validateRequest(request);
+  constructor(repo?: A2ARepository) {
+    this.repo = repo ?? new InMemoryA2ARepo();
+  }
+
+  async sendMessage(request: A2ASendRequest): Promise<A2AMessage> {
+    await this.validateRequest(request);
 
     const message: A2AMessage = {
       id: `a2a-${this.nextId++}`,
@@ -32,116 +36,65 @@ export class A2ARouter {
       ttl: request.ttl ?? A2A_DEFAULT_TTL_S,
     };
 
-    this.messages.set(message.id, message);
-
-    // Add to pending queues for recipients
-    const recipients = Array.isArray(message.to) ? message.to : [message.to];
-    for (const recipient of recipients) {
-      const queue = this.pending.get(recipient) ?? [];
-      queue.push(message);
-      this.pending.set(recipient, queue);
-    }
-
-    // Track correlation chain
-    if (message.correlationId) {
-      const chain = this.correlations.get(message.correlationId) ?? [];
-      chain.push(message);
-      this.correlations.set(message.correlationId, chain);
-    }
-
+    await this.repo.save(message);
     return message;
   }
 
-  getPending(agentId: string): A2AMessage[] {
+  async getPending(agentId: string): Promise<A2AMessage[]> {
     const now = Date.now();
-    const queue = this.pending.get(agentId) ?? [];
-    // Filter out expired messages
+    const queue = await this.repo.getPendingForAgent(agentId);
     return queue.filter((m) => {
       const ttlMs = (m.ttl ?? A2A_DEFAULT_TTL_S) * 1000;
       return now - m.timestamp < ttlMs;
     });
   }
 
-  ack(messageId: string, agentId: string): boolean {
-    const queue = this.pending.get(agentId);
-    if (!queue) return false;
-
-    const idx = queue.findIndex((m) => m.id === messageId);
-    if (idx === -1) return false;
-
-    queue.splice(idx, 1);
-    if (queue.length === 0) {
-      this.pending.delete(agentId);
-    }
-    return true;
+  async ack(messageId: string, agentId: string): Promise<boolean> {
+    return this.repo.removePendingForAgent(messageId, agentId);
   }
 
-  getCorrelation(correlationId: string): A2AMessage[] {
-    return this.correlations.get(correlationId) ?? [];
+  async getCorrelation(correlationId: string): Promise<A2AMessage[]> {
+    return this.repo.getByCorrelation(correlationId);
   }
 
-  getMessage(messageId: string): A2AMessage | undefined {
-    return this.messages.get(messageId);
+  async getMessage(messageId: string): Promise<A2AMessage | undefined> {
+    return this.repo.getById(messageId);
   }
 
-  cleanup(): number {
-    const now = Date.now();
-    let removed = 0;
-
-    // Clean expired messages
-    for (const [id, msg] of this.messages) {
-      const ttlMs = (msg.ttl ?? A2A_DEFAULT_TTL_S) * 1000;
-      if (now - msg.timestamp >= ttlMs) {
-        this.messages.delete(id);
-        removed++;
-      }
-    }
-
-    // Clean expired pending
-    for (const [agentId, queue] of this.pending) {
-      const filtered = queue.filter((m) => {
-        const ttlMs = (m.ttl ?? A2A_DEFAULT_TTL_S) * 1000;
-        return now - m.timestamp < ttlMs;
-      });
-      if (filtered.length === 0) {
-        this.pending.delete(agentId);
-      } else {
-        this.pending.set(agentId, filtered);
-      }
-    }
-
-    // Clean stale correlations
-    const corrTimeoutMs = A2A_CORRELATION_TIMEOUT_S * 1000;
-    for (const [corrId, chain] of this.correlations) {
-      const lastMsg = chain[chain.length - 1];
-      if (lastMsg && now - lastMsg.timestamp >= corrTimeoutMs) {
-        this.correlations.delete(corrId);
-      }
-    }
-
-    return removed;
+  async cleanup(): Promise<number> {
+    return this.repo.deleteExpired(Date.now(), A2A_DEFAULT_TTL_S);
   }
 
-  getStats(): A2AStats {
+  async getStats(): Promise<A2AStats> {
+    const all = await this.repo.getAll();
     const messagesByType: Partial<Record<A2AMessageType, number>> = {};
-    for (const msg of this.messages.values()) {
+    for (const msg of all) {
       messagesByType[msg.type] = (messagesByType[msg.type] ?? 0) + 1;
     }
 
+    // Count pending across all known agents
     let pendingCount = 0;
-    for (const queue of this.pending.values()) {
-      pendingCount += queue.length;
+    const seenAgents = new Set<string>();
+    for (const msg of all) {
+      const recipients = Array.isArray(msg.to) ? msg.to : [msg.to];
+      for (const r of recipients) seenAgents.add(r);
+    }
+    for (const agentId of seenAgents) {
+      const pending = await this.repo.getPendingForAgent(agentId);
+      pendingCount += pending.length;
     }
 
+    const correlationIds = new Set(all.filter((m) => m.correlationId).map((m) => m.correlationId));
+
     return {
-      totalMessages: this.messages.size,
+      totalMessages: all.length,
       pendingMessages: pendingCount,
-      activeCorrelations: this.correlations.size,
+      activeCorrelations: correlationIds.size,
       messagesByType,
     };
   }
 
-  private validateRequest(request: A2ASendRequest): void {
+  private async validateRequest(request: A2ASendRequest): Promise<void> {
     if (!request.from) {
       throw new Error('from is required');
     }
@@ -157,10 +110,9 @@ export class A2ARouter {
       throw new Error(`Payload too large: ${payloadSize} bytes (max ${A2A_MAX_PAYLOAD_BYTES})`);
     }
 
-    // Check pending queue limits for recipients
     const recipients = Array.isArray(request.to) ? request.to : [request.to];
     for (const recipient of recipients) {
-      const queue = this.pending.get(recipient) ?? [];
+      const queue = await this.repo.getPendingForAgent(recipient);
       if (queue.length >= A2A_MAX_PENDING_PER_AGENT) {
         throw new Error(`Pending queue full for agent ${recipient}`);
       }

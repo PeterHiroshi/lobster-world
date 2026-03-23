@@ -1,51 +1,40 @@
 import type { AuditEvent, AuditEventType } from '@lobster-world/protocol';
+import type { AuditRepository } from '../db/repositories/audit-repo.js';
+import { InMemoryAuditRepo } from '../db/repositories/audit-repo.js';
 import { AUDIT_RING_BUFFER_SIZE } from '../config.js';
 
 export class AuditLog {
-  private buffer: AuditEvent[];
-  private head: number = 0;
-  private count: number = 0;
-  private readonly capacity: number;
+  private repo: AuditRepository;
 
-  constructor(capacity: number = AUDIT_RING_BUFFER_SIZE) {
-    this.capacity = capacity;
-    this.buffer = new Array<AuditEvent>(capacity);
-  }
-
-  log(eventType: AuditEventType, participants: string[], details: string): void {
-    const event: AuditEvent = {
-      timestamp: Date.now(),
-      eventType,
-      participants,
-      details,
-    };
-    this.buffer[this.head] = event;
-    this.head = (this.head + 1) % this.capacity;
-    if (this.count < this.capacity) {
-      this.count++;
+  constructor(repoOrCapacity?: AuditRepository | number) {
+    if (typeof repoOrCapacity === 'number') {
+      this.repo = new InMemoryAuditRepo(repoOrCapacity);
+    } else {
+      this.repo = repoOrCapacity ?? new InMemoryAuditRepo();
     }
   }
 
-  getRecent(count: number = 100): AuditEvent[] {
-    const n = Math.min(count, this.count);
-    const result: AuditEvent[] = [];
-    for (let i = 0; i < n; i++) {
-      const idx = (this.head - 1 - i + this.capacity) % this.capacity;
-      result.push(this.buffer[idx]);
-    }
-    return result;
+  async log(eventType: AuditEventType, participants: string[], details: string): Promise<void> {
+    await this.repo.log(eventType, participants, details);
   }
 
-  getAll(): AuditEvent[] {
-    return this.getRecent(this.count);
+  async getRecent(count: number = 100): Promise<AuditEvent[]> {
+    return this.repo.getRecent(count);
   }
 
-  clear(): void {
-    this.head = 0;
-    this.count = 0;
+  async getAll(): Promise<AuditEvent[]> {
+    return this.repo.getAll();
   }
 
-  get size(): number {
-    return this.count;
+  async clear(): Promise<void> {
+    await this.repo.clear();
+  }
+
+  async getSize(): Promise<number> {
+    return this.repo.size();
+  }
+
+  get size(): number | Promise<number> {
+    return this.repo.size();
   }
 }

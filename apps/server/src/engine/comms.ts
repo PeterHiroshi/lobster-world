@@ -1,18 +1,23 @@
 import type { AgentMessage, Meeting, MessageType } from '@lobster-world/protocol';
+import type { CommsRepository } from '../db/repositories/comms-repo.js';
+import { InMemoryCommsRepo } from '../db/repositories/comms-repo.js';
 
 export class CommsEngine {
-  private messages: AgentMessage[] = [];
-  private meetings: Map<string, Meeting> = new Map();
-  private nextMessageId: number = 1;
-  private nextMeetingId: number = 1;
+  private repo: CommsRepository;
+  private nextMessageId = 1;
+  private nextMeetingId = 1;
 
-  sendMessage(
+  constructor(repo?: CommsRepository) {
+    this.repo = repo ?? new InMemoryCommsRepo();
+  }
+
+  async sendMessage(
     from: string,
     to: string | 'all',
     type: MessageType,
     content: string,
     context?: { taskId?: string; docId?: string },
-  ): AgentMessage {
+  ): Promise<AgentMessage> {
     const msg: AgentMessage = {
       id: `msg-${this.nextMessageId++}`,
       from,
@@ -22,25 +27,23 @@ export class CommsEngine {
       timestamp: Date.now(),
       ...(context ? { context } : {}),
     };
-    this.messages.push(msg);
+    await this.repo.saveMessage(msg);
     return msg;
   }
 
-  getMessages(agentId: string): AgentMessage[] {
-    return this.messages.filter(
-      (m) => m.to === agentId || m.to === 'all' || m.from === agentId,
-    );
+  async getMessages(agentId: string): Promise<AgentMessage[]> {
+    return this.repo.getMessages(agentId);
   }
 
-  getMessagesByType(type: MessageType): AgentMessage[] {
-    return this.messages.filter((m) => m.type === type);
+  async getMessagesByType(type: MessageType): Promise<AgentMessage[]> {
+    return this.repo.getMessagesByType(type);
   }
 
-  getRecentMessages(count: number): AgentMessage[] {
-    return this.messages.slice(-count);
+  async getRecentMessages(count: number): Promise<AgentMessage[]> {
+    return this.repo.getRecentMessages(count);
   }
 
-  createMeeting(topic: string, participants: string[]): Meeting {
+  async createMeeting(topic: string, participants: string[]): Promise<Meeting> {
     const meeting: Meeting = {
       id: `meeting-${this.nextMeetingId++}`,
       topic,
@@ -49,16 +52,16 @@ export class CommsEngine {
       decisions: [],
       status: 'active',
     };
-    this.meetings.set(meeting.id, meeting);
+    await this.repo.saveMeeting(meeting);
     return meeting;
   }
 
-  addMeetingMessage(
+  async addMeetingMessage(
     meetingId: string,
     from: string,
     content: string,
-  ): AgentMessage | undefined {
-    const meeting = this.meetings.get(meetingId);
+  ): Promise<AgentMessage | undefined> {
+    const meeting = await this.repo.getMeeting(meetingId);
     if (!meeting || meeting.status === 'ended') return undefined;
 
     const msg: AgentMessage = {
@@ -70,41 +73,44 @@ export class CommsEngine {
       timestamp: Date.now(),
     };
     meeting.messages.push(msg);
-    this.messages.push(msg);
+    await this.repo.updateMeeting(meetingId, meeting);
+    await this.repo.saveMessage(msg);
     return msg;
   }
 
-  addDecision(meetingId: string, decision: string): boolean {
-    const meeting = this.meetings.get(meetingId);
+  async addDecision(meetingId: string, decision: string): Promise<boolean> {
+    const meeting = await this.repo.getMeeting(meetingId);
     if (!meeting || meeting.status === 'ended') return false;
     meeting.decisions.push(decision);
+    await this.repo.updateMeeting(meetingId, meeting);
     return true;
   }
 
-  endMeeting(meetingId: string): Meeting | undefined {
-    const meeting = this.meetings.get(meetingId);
+  async endMeeting(meetingId: string): Promise<Meeting | undefined> {
+    const meeting = await this.repo.getMeeting(meetingId);
     if (!meeting) return undefined;
     meeting.status = 'ended';
+    await this.repo.updateMeeting(meetingId, meeting);
     return meeting;
   }
 
-  getMeeting(id: string): Meeting | undefined {
-    return this.meetings.get(id);
+  async getMeeting(id: string): Promise<Meeting | undefined> {
+    return this.repo.getMeeting(id);
   }
 
-  getActiveMeetings(): Meeting[] {
-    return [...this.meetings.values()].filter((m) => m.status === 'active');
+  async getActiveMeetings(): Promise<Meeting[]> {
+    return this.repo.getActiveMeetings();
   }
 
-  broadcast(fromId: string, content: string): AgentMessage {
+  async broadcast(fromId: string, content: string): Promise<AgentMessage> {
     return this.sendMessage(fromId, 'all', 'broadcast', content);
   }
 
-  getMessageCount(): number {
-    return this.messages.length;
+  async getMessageCount(): Promise<number> {
+    return this.repo.messageCount();
   }
 
-  getMeetingCount(): number {
-    return this.meetings.size;
+  async getMeetingCount(): Promise<number> {
+    return this.repo.meetingCount();
   }
 }
