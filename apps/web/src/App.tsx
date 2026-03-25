@@ -26,10 +26,14 @@ import { WS_SOCIAL_URL } from './lib/constants';
 import type { LobbyProfile } from '@lobster-world/protocol';
 
 export function App() {
-  useWebSocket();
+  const phase = useWorldStore((s) => s.lobbyState.phase);
+
+  // Only connect viewer WebSocket after entering the world — avoids
+  // "WebSocket connection error" on lobby/landing screens.
+  useWebSocket(phase === 'joined');
+
   const isMobile = useIsMobile();
 
-  const phase = useWorldStore((s) => s.lobbyState.phase);
   const setLobbyPhase = useWorldStore((s) => s.setLobbyPhase);
   const setLobbyError = useWorldStore((s) => s.setLobbyError);
   const setSessionToken = useWorldStore((s) => s.setSessionToken);
