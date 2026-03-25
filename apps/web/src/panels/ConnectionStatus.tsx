@@ -1,4 +1,5 @@
 import { useWorldStore } from '../store/useWorldStore';
+import { WS_VIEWER_URL } from '../lib/constants';
 
 const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
   connected: { color: '#22c55e', label: 'Connected' },
