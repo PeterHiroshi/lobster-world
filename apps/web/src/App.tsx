@@ -86,17 +86,9 @@ export function App() {
 
   const handleWatchDemo = useCallback(() => {
     demModeRef.current = true;
-    const demoProfile: LobbyProfile = {
-      displayName: 'Demo Visitor',
-      color: '#6366f1',
-      bio: 'Watching the demo',
-      skills: ['coding'],
-      dailyTokenLimit: 50000,
-      sessionTokenLimit: 5000,
-      permissionPreset: 'open',
-    };
-    connectProxy(demoProfile);
-  }, [connectProxy]);
+    setSessionToken('demo-visitor');
+    startDemoScenario();
+  }, [setSessionToken]);
 
   const handleJoin = useCallback(
     (profile: LobbyProfile) => connectProxy(profile),
