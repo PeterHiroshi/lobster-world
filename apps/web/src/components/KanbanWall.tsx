@@ -1,5 +1,4 @@
 import { memo } from 'react';
-import { Text } from '@react-three/drei';
 import type { Task, TaskStatus } from '@lobster-world/protocol';
 import { KANBAN_WALL_POSITION } from '@lobster-world/protocol';
 import { useWorldStore } from '../store/useWorldStore';
@@ -10,15 +9,19 @@ const WALL_HEIGHT = 4;
 const WALL_DEPTH = 0.1;
 const WALL_Y_CENTER = 2;
 
-const COLUMN_HEADER_Y = 3.8;
 const CARD_START_Y = 3.2;
 const CARD_SPACING = 0.5;
 
-const COLUMNS: { status: TaskStatus; label: string; xOffset: number }[] = [
-  { status: 'todo', label: 'Todo', xOffset: -4.5 },
-  { status: 'doing', label: 'Doing', xOffset: -1.5 },
-  { status: 'review', label: 'Review', xOffset: 1.5 },
-  { status: 'done', label: 'Done', xOffset: 4.5 },
+const COLUMN_HEADER_Y = 3.8;
+const COLUMN_HEADER_WIDTH = 2.0;
+const COLUMN_HEADER_HEIGHT = 0.3;
+const COLUMN_HEADER_DEPTH = 0.02;
+
+const COLUMNS: { status: TaskStatus; label: string; xOffset: number; color: string }[] = [
+  { status: 'todo', label: 'Todo', xOffset: -4.5, color: '#94a3b8' },
+  { status: 'doing', label: 'Doing', xOffset: -1.5, color: '#3b82f6' },
+  { status: 'review', label: 'Review', xOffset: 1.5, color: '#f59e0b' },
+  { status: 'done', label: 'Done', xOffset: 4.5, color: '#22c55e' },
 ];
 
 const KanbanWallInner = () => {
@@ -47,20 +50,14 @@ const KanbanWallInner = () => {
         <meshStandardMaterial color="#f0f0f0" />
       </mesh>
 
-      {/* Column headers and task cards */}
+      {/* Column headers (colored strips instead of text) and task cards */}
       {COLUMNS.map((column) => (
         <group key={column.status}>
-          {/* Column header */}
-          <Text
-            position={[column.xOffset, COLUMN_HEADER_Y, WALL_DEPTH / 2 + 0.01]}
-            fontSize={0.25}
-            color="#333333"
-            anchorX="center"
-            anchorY="middle"
-            fontWeight="bold"
-          >
-            {column.label}
-          </Text>
+          {/* Column header — colored strip */}
+          <mesh position={[column.xOffset, COLUMN_HEADER_Y, WALL_DEPTH / 2 + 0.01]}>
+            <boxGeometry args={[COLUMN_HEADER_WIDTH, COLUMN_HEADER_HEIGHT, COLUMN_HEADER_DEPTH]} />
+            <meshStandardMaterial color={column.color} />
+          </mesh>
 
           {/* Task cards */}
           {tasksByStatus[column.status].map((task, index) => (

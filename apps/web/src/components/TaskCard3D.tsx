@@ -1,5 +1,4 @@
 import { memo, useRef, useState } from 'react';
-import { Text } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import type { Mesh } from 'three';
 import type { Task } from '@lobster-world/protocol';
@@ -14,16 +13,11 @@ interface TaskCard3DProps {
 const CARD_WIDTH = 2.5;
 const CARD_HEIGHT = 0.4;
 const CARD_DEPTH = 0.05;
-const MAX_TITLE_LENGTH = 20;
 const HOVER_Z_OFFSET = 0.08;
 const LERP_SPEED = 8;
 const PULSE_SPEED = 4;
 const PULSE_MIN_INTENSITY = 0.6;
-
-function truncateTitle(title: string): string {
-  if (title.length <= MAX_TITLE_LENGTH) return title;
-  return title.slice(0, MAX_TITLE_LENGTH - 1) + '\u2026';
-}
+const PRIORITY_STRIP_WIDTH = 0.15;
 
 const TaskCard3DInner = ({ task, position }: TaskCard3DProps) => {
   const meshRef = useRef<Mesh>(null);
@@ -62,6 +56,7 @@ const TaskCard3DInner = ({ task, position }: TaskCard3DProps) => {
 
   return (
     <group position={position}>
+      {/* Card background */}
       <mesh
         ref={meshRef}
         onClick={handleClick}
@@ -70,21 +65,16 @@ const TaskCard3DInner = ({ task, position }: TaskCard3DProps) => {
       >
         <boxGeometry args={[CARD_WIDTH, CARD_HEIGHT, CARD_DEPTH]} />
         <meshStandardMaterial
-          color={color}
+          color="#ffffff"
           emissive={color}
-          emissiveIntensity={hasAnimation ? 0.6 : 0}
+          emissiveIntensity={hasAnimation ? 0.6 : 0.05}
         />
       </mesh>
-      <Text
-        position={[0, 0, CARD_DEPTH / 2 + 0.01]}
-        fontSize={0.12}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        maxWidth={CARD_WIDTH - 0.2}
-      >
-        {truncateTitle(task.title)}
-      </Text>
+      {/* Priority color strip on left edge */}
+      <mesh position={[-(CARD_WIDTH / 2) + PRIORITY_STRIP_WIDTH / 2, 0, CARD_DEPTH / 2 + 0.001]}>
+        <boxGeometry args={[PRIORITY_STRIP_WIDTH, CARD_HEIGHT, 0.01]} />
+        <meshBasicMaterial color={color} />
+      </mesh>
     </group>
   );
 };

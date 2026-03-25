@@ -51,6 +51,9 @@ export const TASK_STATUS_COLORS: Record<string, string> = {
   done: '#22c55e',
 };
 
+// Render limits
+export const MAX_RENDERED_LOBSTERS = 20;
+
 // Lobster
 export const LOBSTER_SCALE = 0.5;
 export const LEG_PAIRS = 4;

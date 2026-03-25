@@ -1,5 +1,4 @@
 import { memo } from 'react';
-import { Text } from '@react-three/drei';
 import { MEETING_ROOM_POSITION } from '@lobster-world/protocol';
 import type { Meeting } from '@lobster-world/protocol';
 import { useWorldStore } from '../store/useWorldStore';
@@ -11,12 +10,17 @@ const CHAIR_OFFSETS: [number, number, number][] = [
   [1.2, 0.25, 0],
 ];
 
+const MEETING_INDICATOR_ACTIVE_COLOR = '#3b82f6';
+const MEETING_INDICATOR_IDLE_COLOR = '#6b7280';
+
 export const MeetingRoom = memo(function MeetingRoom() {
   const meetings = useWorldStore((state) => state.meetings);
 
   const activeMeeting: Meeting | undefined = Object.values(meetings).find(
     (m) => m.status === 'active',
   );
+
+  const indicatorColor = activeMeeting ? MEETING_INDICATOR_ACTIVE_COLOR : MEETING_INDICATOR_IDLE_COLOR;
 
   return (
     <group position={[MEETING_ROOM_POSITION.x, MEETING_ROOM_POSITION.y, MEETING_ROOM_POSITION.z]}>
@@ -46,29 +50,15 @@ export const MeetingRoom = memo(function MeetingRoom() {
         </mesh>
       ))}
 
-      {/* Label or meeting topic */}
-      {activeMeeting ? (
-        <Text
-          position={[0, 1.5, 0]}
-          fontSize={0.15}
-          color="white"
-          anchorX="center"
-          anchorY="middle"
-          maxWidth={3}
-        >
-          {activeMeeting.topic}
-        </Text>
-      ) : (
-        <Text
-          position={[0, 1.5, 0]}
-          fontSize={0.15}
-          color="#999"
-          anchorX="center"
-          anchorY="middle"
-        >
-          Meeting Room
-        </Text>
-      )}
+      {/* Meeting status indicator — floating sphere above table */}
+      <mesh position={[0, 1.5, 0]}>
+        <sphereGeometry args={[0.12, 16, 16]} />
+        <meshStandardMaterial
+          color={indicatorColor}
+          emissive={indicatorColor}
+          emissiveIntensity={activeMeeting ? 0.5 : 0.1}
+        />
+      </mesh>
     </group>
   );
 });

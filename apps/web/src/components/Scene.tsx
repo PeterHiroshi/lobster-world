@@ -70,22 +70,24 @@ export function Scene() {
   }
 
   return (
-    <Canvas
-      camera={{ position: CAMERA_INITIAL_POSITION, fov: 50 }}
-      shadows
-      className="w-full h-full"
-      style={{ background: isDark ? '#0f172a' : '#f1f5f9' }}
-      onCreated={handleCreated}
-    >
-      <CameraController />
-      <OrbitControls makeDefault enableDamping dampingFactor={0.1} />
-      <SceneLighting />
-      <Office />
-      <LobsterRenderer />
-      <Particles />
-      <DialogueConnections />
-      <A2AConnections />
+    <div className="relative w-full h-full">
+      <Canvas
+        camera={{ position: CAMERA_INITIAL_POSITION, fov: 50 }}
+        shadows
+        className="w-full h-full"
+        style={{ background: isDark ? '#0f172a' : '#f1f5f9' }}
+        onCreated={handleCreated}
+      >
+        <CameraController />
+        <OrbitControls makeDefault enableDamping dampingFactor={0.1} />
+        <SceneLighting />
+        <Office />
+        <LobsterRenderer />
+        <Particles />
+        <DialogueConnections />
+        <A2AConnections />
+      </Canvas>
       <LobsterDetailCard />
-    </Canvas>
+    </div>
   );
 }
