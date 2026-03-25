@@ -22,10 +22,10 @@ const SceneLighting = memo(function SceneLighting() {
 
   return (
     <>
-      <ambientLight intensity={isDark ? 0.5 : 0.7} />
+      <ambientLight intensity={isDark ? 0.7 : 0.7} />
       <directionalLight
         position={[5, 10, 5]}
-        intensity={isDark ? 1.0 : 1.4}
+        intensity={isDark ? 1.5 : 1.4}
         castShadow
         shadow-mapSize-width={SHADOW_MAP_SIZE}
         shadow-mapSize-height={SHADOW_MAP_SIZE}
@@ -37,8 +37,8 @@ const SceneLighting = memo(function SceneLighting() {
       <hemisphereLight
         args={[isDark ? '#1e293b' : '#bfdbfe', isDark ? '#0f172a' : '#f1f5f9', isDark ? 0.4 : 0.5]}
       />
-      {isDark && <fog attach="fog" args={['#0f172a', 15, 35]} />}
-      {!isDark && <fog attach="fog" args={['#f8fafc', 20, 45]} />}
+      {isDark && <fog attach="fog" args={['#0f172a', 30, 60]} />}
+      {!isDark && <fog attach="fog" args={['#f8fafc', 35, 70]} />}
     </>
   );
 });
