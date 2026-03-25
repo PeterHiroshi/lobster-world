@@ -1,6 +1,6 @@
 import { useCallback, memo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { Office } from './Office';
 import { LobsterRenderer } from './LobsterRenderer';
 import { CameraController } from './CameraController';
@@ -22,13 +22,20 @@ const SceneLighting = memo(function SceneLighting() {
 
   return (
     <>
-      <ambientLight intensity={isDark ? 0.4 : 0.6} />
+      <ambientLight intensity={isDark ? 0.5 : 0.7} />
       <directionalLight
         position={[5, 10, 5]}
-        intensity={isDark ? 0.8 : 1.2}
+        intensity={isDark ? 1.0 : 1.4}
         castShadow
         shadow-mapSize-width={SHADOW_MAP_SIZE}
         shadow-mapSize-height={SHADOW_MAP_SIZE}
+      />
+      <directionalLight
+        position={[-3, 5, -3]}
+        intensity={isDark ? 0.3 : 0.4}
+      />
+      <hemisphereLight
+        args={[isDark ? '#1e293b' : '#bfdbfe', isDark ? '#0f172a' : '#f1f5f9', isDark ? 0.4 : 0.5]}
       />
       {isDark && <fog attach="fog" args={['#0f172a', 15, 35]} />}
       {!isDark && <fog attach="fog" args={['#f8fafc', 20, 45]} />}
@@ -72,7 +79,6 @@ export function Scene() {
     >
       <CameraController />
       <OrbitControls makeDefault enableDamping dampingFactor={0.1} />
-      <Environment preset={isDark ? 'night' : 'studio'} />
       <SceneLighting />
       <Office />
       <LobsterRenderer />
