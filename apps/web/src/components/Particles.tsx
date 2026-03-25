@@ -4,7 +4,6 @@ import { Sparkles } from '@react-three/drei';
 import type { Group } from 'three';
 import { useWorldStore } from '../store/useWorldStore';
 import type { EffectEntry } from '../store/useWorldStore';
-import { AMBIENT_DUST_COUNT } from '../lib/constants';
 
 const CONFETTI_COUNT = 20;
 const CONFETTI_COLORS = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#a8e6cf', '#ff8b94'];
@@ -49,7 +48,7 @@ const ConfettiEffect = memo(function ConfettiEffect({ effect }: { effect: Effect
       {pieces.map((piece, i) => (
         <mesh key={i}>
           <boxGeometry args={[0.04, 0.04, 0.01]} />
-          <meshStandardMaterial color={piece.color} />
+          <meshBasicMaterial color={piece.color} />
         </mesh>
       ))}
     </group>
@@ -71,16 +70,7 @@ const SparkleEffect = memo(function SparkleEffect({ effect }: { effect: EffectEn
 });
 
 const AmbientDust = memo(function AmbientDust() {
-  return (
-    <Sparkles
-      count={AMBIENT_DUST_COUNT}
-      scale={20}
-      size={1}
-      speed={0.3}
-      opacity={0.3}
-      color="#ffffff"
-    />
-  );
+  return null;
 });
 
 export const Particles = memo(function Particles() {

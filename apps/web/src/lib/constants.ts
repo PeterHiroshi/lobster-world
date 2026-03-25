@@ -21,13 +21,13 @@ export const IDLE_BOB_AMPLITUDE = 0.05;
 export const IDLE_BOB_SPEED = 2;
 export const BREATHING_SPEED = 0.5;
 export const CLAW_OSCILLATION_SPEED = 12;
-export const ENTER_EXIT_SCALE_SPEED = 0.08;
+export const ENTER_EXIT_SCALE_SPEED = 0.15;
 
 // UI
 export const BUBBLE_TIMEOUT_MS = 5000;
 
 // Camera
-export const CAMERA_INITIAL_POSITION: [number, number, number] = [8, 8, 8];
+export const CAMERA_INITIAL_POSITION: [number, number, number] = [12, 10, 12];
 export const CAMERA_LOOK_AT: [number, number, number] = [0, 0, 0];
 export const CAMERA_FOCUS_OFFSET: [number, number, number] = [2, 2, 2];
 export const CAMERA_LERP_FACTOR = 0.03;
@@ -54,7 +54,7 @@ export const TASK_STATUS_COLORS: Record<string, string> = {
 };
 
 // Lobster
-export const LOBSTER_SCALE = 0.5;
+export const LOBSTER_SCALE = 1.5;
 export const LEG_PAIRS = 4;
 export const LEG_RADIUS = 0.012;
 export const LEG_LENGTH = 0.1;

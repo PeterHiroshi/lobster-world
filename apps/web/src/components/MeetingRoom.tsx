@@ -21,28 +21,28 @@ export const MeetingRoom = memo(function MeetingRoom() {
   return (
     <group position={[MEETING_ROOM_POSITION.x, MEETING_ROOM_POSITION.y, MEETING_ROOM_POSITION.z]}>
       {/* Floor patch */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
         <circleGeometry args={[2.5, 32]} />
-        <meshStandardMaterial color="#d4d8e0" />
+        <meshBasicMaterial color="#d4d8e0" />
       </mesh>
 
       {/* Round table */}
-      <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
+      <mesh position={[0, 0.45, 0]}>
         <cylinderGeometry args={[0.8, 0.8, 0.05, 24]} />
-        <meshStandardMaterial color="#5c3a1e" />
+        <meshBasicMaterial color="#5c3a1e" />
       </mesh>
 
       {/* Table leg */}
       <mesh position={[0, 0.225, 0]}>
         <cylinderGeometry args={[0.08, 0.08, 0.45, 8]} />
-        <meshStandardMaterial color="#4a2e15" />
+        <meshBasicMaterial color="#4a2e15" />
       </mesh>
 
       {/* Chairs */}
       {CHAIR_OFFSETS.map((pos, i) => (
-        <mesh key={i} position={pos} castShadow>
+        <mesh key={i} position={pos}>
           <boxGeometry args={[0.4, 0.5, 0.4]} />
-          <meshStandardMaterial color="#6b7280" />
+          <meshBasicMaterial color="#6b7280" />
         </mesh>
       ))}
 
