@@ -1,7 +1,11 @@
 import { memo, useRef, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
+import { Vector3 } from 'three';
 import type { Group, Mesh } from 'three';
 import type { LobsterState, AnimationType } from '@lobster-world/protocol';
+
+// Reusable Vector3 for eye pupil tracking — avoids per-frame allocation
+const _camDir = new Vector3();
 import { LobsterLabel } from './LobsterLabel';
 import { useWorldStore } from '../store/useWorldStore';
 import {
@@ -220,11 +224,11 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
     // Animate legs
     animateLegs(legRefs, effectiveAnimation, time);
 
-    // Eye pupils track camera
+    // Eye pupils track camera (reuse _camDir to avoid GC pressure)
     if (leftPupilRef.current && rightPupilRef.current && groupRef.current) {
-      const camDir = camera.position.clone().sub(groupRef.current.position).normalize();
-      const px = camDir.x * PUPIL_TRACK_FACTOR;
-      const py = camDir.y * PUPIL_TRACK_FACTOR;
+      _camDir.copy(camera.position).sub(groupRef.current.position).normalize();
+      const px = _camDir.x * PUPIL_TRACK_FACTOR;
+      const py = _camDir.y * PUPIL_TRACK_FACTOR;
       leftPupilRef.current.position.x = px;
       leftPupilRef.current.position.y = py;
       leftPupilRef.current.position.z = 0.03;

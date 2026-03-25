@@ -1,7 +1,8 @@
+import { memo } from 'react';
 import { useWorldStore } from '../store/useWorldStore';
 import { Lobster } from './Lobster';
 
-export function LobsterRenderer() {
+export const LobsterRenderer = memo(function LobsterRenderer() {
   const lobsters = useWorldStore((s) => s.lobsters);
 
   return (
@@ -11,4 +12,4 @@ export function LobsterRenderer() {
       ))}
     </>
   );
-}
+});
