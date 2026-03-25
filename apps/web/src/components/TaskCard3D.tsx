@@ -1,4 +1,5 @@
 import { memo, useRef, useState } from 'react';
+import { Text } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import type { Mesh } from 'three';
 import type { Task } from '@lobster-world/protocol';
@@ -13,11 +14,16 @@ interface TaskCard3DProps {
 const CARD_WIDTH = 2.5;
 const CARD_HEIGHT = 0.4;
 const CARD_DEPTH = 0.05;
+const MAX_TITLE_LENGTH = 20;
 const HOVER_Z_OFFSET = 0.08;
 const LERP_SPEED = 8;
 const PULSE_SPEED = 4;
 const PULSE_MIN_INTENSITY = 0.6;
-const PRIORITY_STRIP_WIDTH = 0.15;
+
+function truncateTitle(title: string): string {
+  if (title.length <= MAX_TITLE_LENGTH) return title;
+  return title.slice(0, MAX_TITLE_LENGTH - 1) + '\u2026';
+}
 
 const TaskCard3DInner = ({ task, position }: TaskCard3DProps) => {
   const meshRef = useRef<Mesh>(null);
@@ -37,15 +43,15 @@ const TaskCard3DInner = ({ task, position }: TaskCard3DProps) => {
     currentZ.current += (targetZ - currentZ.current) * Math.min(LERP_SPEED * delta, 1);
     meshRef.current.position.z = currentZ.current;
 
-    // Pulse/glow effect for animated tasks
+    // Pulse effect for animated tasks — vary opacity
     if (hasAnimation) {
       const material = meshRef.current.material;
-      if ('emissiveIntensity' in material) {
+      if ('opacity' in material) {
         const pulse =
           PULSE_MIN_INTENSITY +
           (1 - PULSE_MIN_INTENSITY) *
             (0.5 + 0.5 * Math.sin(_state.clock.elapsedTime * PULSE_SPEED));
-        (material as { emissiveIntensity: number }).emissiveIntensity = pulse;
+        (material as { opacity: number }).opacity = pulse;
       }
     }
   });
@@ -56,7 +62,6 @@ const TaskCard3DInner = ({ task, position }: TaskCard3DProps) => {
 
   return (
     <group position={position}>
-      {/* Card background */}
       <mesh
         ref={meshRef}
         onClick={handleClick}
@@ -64,17 +69,21 @@ const TaskCard3DInner = ({ task, position }: TaskCard3DProps) => {
         onPointerLeave={() => setHovered(false)}
       >
         <boxGeometry args={[CARD_WIDTH, CARD_HEIGHT, CARD_DEPTH]} />
-        <meshStandardMaterial
-          color="#ffffff"
-          emissive={color}
-          emissiveIntensity={hasAnimation ? 0.6 : 0.05}
+        <meshBasicMaterial
+          color={color}
+          transparent={hasAnimation}
         />
       </mesh>
-      {/* Priority color strip on left edge */}
-      <mesh position={[-(CARD_WIDTH / 2) + PRIORITY_STRIP_WIDTH / 2, 0, CARD_DEPTH / 2 + 0.001]}>
-        <boxGeometry args={[PRIORITY_STRIP_WIDTH, CARD_HEIGHT, 0.01]} />
-        <meshBasicMaterial color={color} />
-      </mesh>
+      <Text
+        position={[0, 0, CARD_DEPTH / 2 + 0.01]}
+        fontSize={0.12}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        maxWidth={CARD_WIDTH - 0.2}
+      >
+        {truncateTitle(task.title)}
+      </Text>
     </group>
   );
 };
