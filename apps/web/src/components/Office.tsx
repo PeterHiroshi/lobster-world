@@ -55,12 +55,15 @@ const AgentDesks = memo(function AgentDesks() {
 });
 
 export const Office = memo(function Office() {
+  const theme = useWorldStore((s) => s.theme);
+  const isDark = theme === 'dark';
+
   return (
     <group>
       {/* Floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[FLOOR_SIZE, FLOOR_SIZE]} />
-        <meshStandardMaterial color="#e5e7eb" />
+        <meshStandardMaterial color={isDark ? '#1e293b' : '#e5e7eb'} />
       </mesh>
 
       {/* Grid overlay */}
@@ -68,9 +71,9 @@ export const Office = memo(function Office() {
         args={[FLOOR_SIZE, FLOOR_SIZE]}
         position={[0, 0.001, 0]}
         cellSize={1}
-        cellColor="#d1d5db"
+        cellColor={isDark ? '#334155' : '#d1d5db'}
         sectionSize={5}
-        sectionColor="#9ca3af"
+        sectionColor={isDark ? '#475569' : '#9ca3af'}
         fadeDistance={25}
         infiniteGrid={false}
       />
