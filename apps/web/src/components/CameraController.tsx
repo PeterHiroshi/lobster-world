@@ -10,7 +10,6 @@ const offset = new Vector3(...CAMERA_FOCUS_OFFSET);
 export function CameraController() {
   const { camera } = useThree();
   const focusLobsterId = useWorldStore((s) => s.focusLobsterId);
-  const lobsters = useWorldStore((s) => s.lobsters);
   const isAnimating = useRef(false);
 
   useFrame(() => {
@@ -19,7 +18,8 @@ export function CameraController() {
       return;
     }
 
-    const lobster = lobsters[focusLobsterId];
+    // Read lobster position directly from store to avoid subscribing to all lobsters
+    const lobster = useWorldStore.getState().lobsters[focusLobsterId];
     if (!lobster) return;
 
     targetPos.set(

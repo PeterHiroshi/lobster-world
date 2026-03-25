@@ -32,6 +32,8 @@ export const CAMERA_LERP_FACTOR = 0.03;
 
 // Scene
 export const FLOOR_SIZE = 24;
+export const SHADOW_MAP_SIZE = 512;
+export const AMBIENT_DUST_COUNT = 20;
 export const DESK_POSITIONS: [number, number][] = [
   [-3, -2], [0, -2], [3, -2],
   [-3, 2], [0, 2], [3, 2],
@@ -56,8 +58,8 @@ export const LEG_RADIUS = 0.012;
 export const LEG_LENGTH = 0.1;
 export const LEG_SPACING = 0.06;
 export const PUPIL_TRACK_FACTOR = 0.015;
-export const BODY_SEGMENTS_CAP = 16;
-export const BODY_SEGMENTS_RADIAL = 32;
+export const BODY_SEGMENTS_CAP = 8;
+export const BODY_SEGMENTS_RADIAL = 16;
 
 // Entrance animation
 export const ENTRANCE_POSITION: [number, number, number] = [0, 0, -10];
