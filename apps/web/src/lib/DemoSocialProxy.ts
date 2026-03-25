@@ -67,7 +67,6 @@ export class DemoSocialProxy {
   private retryCount = 0;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingWsUrl: string | null = null;
-  private pendingProfile: LobbyProfile | null = null;
 
   constructor(callbacks: DemoSocialProxyCallbacks) {
     this.callbacks = callbacks;
@@ -113,7 +112,6 @@ export class DemoSocialProxy {
     };
 
     this.pendingWsUrl = wsUrl;
-    this.pendingProfile = lobbyProfile;
     this.retryCount = 0;
     this.clearRetryTimer();
     this.attemptConnect();
@@ -326,7 +324,6 @@ export class DemoSocialProxy {
   disconnect(): void {
     this.clearRetryTimer();
     this.pendingWsUrl = null;
-    this.pendingProfile = null;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
