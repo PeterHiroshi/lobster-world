@@ -16,6 +16,11 @@ import {
   BUDGET_WARNING_THRESHOLD,
   BUDGET_CRITICAL_THRESHOLD,
 } from '@lobster-world/protocol';
+import {
+  SOCIAL_WS_MAX_RETRIES,
+  SOCIAL_WS_BASE_DELAY_MS,
+  SOCIAL_WS_ERROR_MESSAGE,
+} from './constants';
 
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes)
@@ -59,6 +64,10 @@ export class DemoSocialProxy {
   private dailySessionsUsed = 0;
   private sessionTokensUsed = 0;
   private activeSessionId: string | null = null;
+  private retryCount = 0;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingWsUrl: string | null = null;
+  private pendingProfile: LobbyProfile | null = null;
 
   constructor(callbacks: DemoSocialProxyCallbacks) {
     this.callbacks = callbacks;
@@ -103,19 +112,50 @@ export class DemoSocialProxy {
       partition: 'public',
     };
 
-    this.ws = new WebSocket(wsUrl);
+    this.pendingWsUrl = wsUrl;
+    this.pendingProfile = lobbyProfile;
+    this.retryCount = 0;
+    this.clearRetryTimer();
+    this.attemptConnect();
+  }
+
+  private attemptConnect(): void {
+    if (!this.pendingWsUrl) return;
+
+    this.ws = new WebSocket(this.pendingWsUrl);
     this.ws.onopen = () => {
+      this.retryCount = 0;
       this.sendLobbyJoin();
     };
     this.ws.onmessage = (event) => {
       this.handleMessage(event.data as string);
     };
     this.ws.onerror = () => {
-      this.callbacks.onError('WebSocket connection error');
+      this.handleConnectionError();
     };
     this.ws.onclose = () => {
       this.ws = null;
     };
+  }
+
+  private handleConnectionError(): void {
+    if (this.retryCount < SOCIAL_WS_MAX_RETRIES) {
+      const delay = SOCIAL_WS_BASE_DELAY_MS * Math.pow(2, this.retryCount);
+      this.retryCount++;
+      this.retryTimer = setTimeout(() => {
+        this.retryTimer = null;
+        this.attemptConnect();
+      }, delay);
+    } else {
+      this.callbacks.onError(SOCIAL_WS_ERROR_MESSAGE);
+    }
+  }
+
+  private clearRetryTimer(): void {
+    if (this.retryTimer !== null) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
   }
 
   private sendLobbyJoin(): void {
@@ -284,6 +324,9 @@ export class DemoSocialProxy {
   }
 
   disconnect(): void {
+    this.clearRetryTimer();
+    this.pendingWsUrl = null;
+    this.pendingProfile = null;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
