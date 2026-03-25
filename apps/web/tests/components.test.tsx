@@ -16,8 +16,7 @@ vi.mock('@react-three/drei', () => ({
   OrbitControls: () => null,
   Environment: () => null,
   Grid: () => null,
-  Billboard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Text: () => null,
+  Html: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 describe('StatsPanel', () => {
