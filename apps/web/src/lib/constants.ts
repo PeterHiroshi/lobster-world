@@ -7,6 +7,12 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localho
 export const RECONNECT_BASE_DELAY_MS = 1000;
 export const RECONNECT_MAX_RETRIES = 5;
 
+// Social WS retry
+export const SOCIAL_WS_MAX_RETRIES = 3;
+export const SOCIAL_WS_BASE_DELAY_MS = 1000;
+export const SOCIAL_WS_ERROR_MESSAGE =
+  'Unable to connect to the social server. Please check that the server is running and try again.';
+
 // Animation
 export const POSITION_LERP_FACTOR = 0.05;
 export const IDLE_BOB_AMPLITUDE = 0.05;

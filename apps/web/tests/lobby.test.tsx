@@ -77,7 +77,7 @@ describe('LobbyScreen', () => {
       lobbyState: { phase: 'lobby', profile: null, sessionToken: null, error: 'Auth failed' },
     });
     render(<LobbyScreen onJoin={onJoin} />);
-    expect(screen.getByTestId('lobby-error').textContent).toBe('Auth failed');
+    expect(screen.getByTestId('lobby-error').textContent).toContain('Auth failed');
   });
 
   it('shows Joining button text when phase is joining', () => {
@@ -86,5 +86,37 @@ describe('LobbyScreen', () => {
     });
     render(<LobbyScreen onJoin={onJoin} />);
     expect(screen.getByTestId('enter-world-button').textContent).toBe('Joining...');
+  });
+
+  it('shows Retry button when error is set and phase is lobby', () => {
+    useWorldStore.setState({
+      lobbyState: { phase: 'lobby', profile: null, sessionToken: null, error: 'Connection failed' },
+    });
+    render(<LobbyScreen onJoin={onJoin} />);
+    const retryBtn = screen.getByTestId('retry-button');
+    expect(retryBtn).toBeDefined();
+    expect(retryBtn.textContent).toBe('Retry');
+  });
+
+  it('Retry button calls onJoin with current form values', () => {
+    useWorldStore.setState({
+      lobbyState: { phase: 'lobby', profile: null, sessionToken: null, error: 'Connection failed' },
+    });
+    render(<LobbyScreen onJoin={onJoin} />);
+
+    // Fill in name first
+    fireEvent.change(screen.getByTestId('display-name-input'), { target: { value: 'RetryLobster' } });
+
+    fireEvent.click(screen.getByTestId('retry-button'));
+    expect(onJoin).toHaveBeenCalledTimes(1);
+    expect(onJoin.mock.calls[0][0].displayName).toBe('RetryLobster');
+  });
+
+  it('does not show Retry button when no error', () => {
+    useWorldStore.setState({
+      lobbyState: { phase: 'lobby', profile: null, sessionToken: null, error: null },
+    });
+    render(<LobbyScreen onJoin={onJoin} />);
+    expect(screen.queryByTestId('retry-button')).toBeNull();
   });
 });
