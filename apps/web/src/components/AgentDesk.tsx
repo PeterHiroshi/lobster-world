@@ -1,5 +1,4 @@
 import { memo } from 'react';
-import { Text } from '@react-three/drei';
 
 interface AgentDeskProps {
   position: [number, number, number];
@@ -10,8 +9,6 @@ interface AgentDeskProps {
 
 export const AgentDesk = memo(function AgentDesk({
   position,
-  agentName,
-  roleIcon,
   roleColor,
 }: AgentDeskProps) {
   return (
@@ -48,22 +45,11 @@ export const AgentDesk = memo(function AgentDesk({
         <meshStandardMaterial color="#333" />
       </mesh>
 
-      {/* Nameplate */}
+      {/* Nameplate — colored strip (no text) */}
       <mesh position={[0, 0.85, 0.35]}>
         <boxGeometry args={[0.6, 0.15, 0.02]} />
         <meshStandardMaterial color={roleColor} />
       </mesh>
-
-      {/* Nameplate text */}
-      <Text
-        position={[0, 0.85, 0.365]}
-        fontSize={0.06}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {`${roleIcon} ${agentName}`}
-      </Text>
     </group>
   );
 });
