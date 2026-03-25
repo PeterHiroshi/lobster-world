@@ -12,6 +12,8 @@ export const SOCIAL_WS_MAX_RETRIES = 3;
 export const SOCIAL_WS_BASE_DELAY_MS = 1000;
 export const SOCIAL_WS_ERROR_MESSAGE =
   'Unable to connect to the social server. Please check that the server is running and try again.';
+export const SOCIAL_WS_ERROR_SUGGEST_DEMO =
+  'Unable to connect to the server. Try Demo mode instead — it works without a server.';
 
 // Animation
 export const POSITION_LERP_FACTOR = 0.05;
