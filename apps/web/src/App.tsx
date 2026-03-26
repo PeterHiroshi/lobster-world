@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, lazy, Suspense } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { StatsPanel } from './panels/StatsPanel';
 import { ChatPanel } from './panels/ChatPanel';
 import { ConnectionStatus } from './panels/ConnectionStatus';
@@ -15,9 +15,8 @@ import { LandingPage } from './components/LandingPage';
 import { PermissionRequestOverlay } from './components/PermissionRequestOverlay';
 import { DemoTour } from './components/DemoTour';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Scene } from './components/Scene';
 import { useIsMobile } from './hooks/useMediaQuery';
-
-const Scene = lazy(() => import('./components/Scene').then((m) => ({ default: m.Scene })));
 import { useWebSocket } from './hooks/useWebSocket';
 import { useWorldStore } from './store/useWorldStore';
 import { DemoSocialProxy } from './lib/DemoSocialProxy';
@@ -106,9 +105,7 @@ export function App() {
   return (
     <div className="relative w-full h-full">
       <ErrorBoundary>
-        <Suspense fallback={<div className="flex items-center justify-center w-full h-full text-gray-400">Loading 3D scene...</div>}>
-          <Scene />
-        </Suspense>
+        <Scene />
       </ErrorBoundary>
       <StatsPanel />
       <ChatPanel />
