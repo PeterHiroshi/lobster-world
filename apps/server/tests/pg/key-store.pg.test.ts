@@ -1,11 +1,18 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { KeyStore } from '../src/engine/key-store.js';
+/**
+ * KeyStore — PostgreSQL Integration Tests
+ *
+ * Mirrors the InMemory tests in key-store.test.ts but runs against a real PG database.
+ * Skipped when TEST_DATABASE_URL is not set.
+ */
+import { pgTestSuite } from '../helpers/pg-test-helpers.js';
+import { KeyStore } from '../../src/engine/key-store.js';
+import { PgKeyStoreRepo } from '../../src/db/repositories/key-store-repo.js';
 
-describe('KeyStore', () => {
+pgTestSuite('KeyStore (PostgreSQL)', ({ getDb }) => {
   let store: KeyStore;
 
   beforeEach(() => {
-    store = new KeyStore();
+    store = new KeyStore(new PgKeyStoreRepo(getDb()));
   });
 
   it('stores and retrieves a public key', async () => {
@@ -30,18 +37,18 @@ describe('KeyStore', () => {
     expect(await store.size()).toBe(1);
   });
 
-  it('returns all keys', async () => {
-    await store.store('a', 'key-a');
-    await store.store('b', 'key-b');
+  it('lists all keys', async () => {
+    await store.store('lobster-a', 'key-a');
+    await store.store('lobster-b', 'key-b');
     const all = await store.getAll();
     expect(all).toHaveLength(2);
-    expect(all.map((r) => r.lobsterId).sort()).toEqual(['a', 'b']);
+    expect(all.map((r) => r.lobsterId).sort()).toEqual(['lobster-a', 'lobster-b']);
   });
 
   it('removes a key', async () => {
-    await store.store('a', 'key-a');
-    expect(await store.remove('a')).toBe(true);
-    expect(await store.get('a')).toBeUndefined();
+    await store.store('lobster-a', 'key-a');
+    expect(await store.remove('lobster-a')).toBe(true);
+    expect(await store.get('lobster-a')).toBeUndefined();
     expect(await store.size()).toBe(0);
   });
 
@@ -49,11 +56,12 @@ describe('KeyStore', () => {
     expect(await store.remove('unknown')).toBe(false);
   });
 
-  it('reports correct size', async () => {
+  it('tracks size correctly', async () => {
     expect(await store.size()).toBe(0);
     await store.store('a', 'key-a');
-    expect(await store.size()).toBe(1);
     await store.store('b', 'key-b');
     expect(await store.size()).toBe(2);
+    await store.remove('a');
+    expect(await store.size()).toBe(1);
   });
 });

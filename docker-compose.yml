@@ -2,15 +2,16 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: lobster_world
-      POSTGRES_USER: lobster
-      POSTGRES_PASSWORD: lobster_dev
+      POSTGRES_DB: ${POSTGRES_DB:-lobster_world}
+      POSTGRES_USER: ${POSTGRES_USER:-lobster}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lobster_dev}
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lobster -d lobster_world"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lobster} -d ${POSTGRES_DB:-lobster_world}"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -20,11 +21,15 @@ services:
     ports:
       - "${PORT:-3001}:3001"
     environment:
-      - NODE_ENV=production
-      - PORT=3001
-      - HOST=0.0.0.0
-      - CORS_ORIGINS=${CORS_ORIGINS:-*}
-      - DATABASE_URL=postgres://lobster:lobster_dev@db:5432/lobster_world
+      NODE_ENV: production
+      PORT: "3001"
+      HOST: "0.0.0.0"
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      DATABASE_URL: postgres://${POSTGRES_USER:-lobster}:${POSTGRES_PASSWORD:-lobster_dev}@db:5432/${POSTGRES_DB:-lobster_world}
+      DB_POOL_MAX: ${DB_POOL_MAX:-10}
+      DB_POOL_IDLE_TIMEOUT: ${DB_POOL_IDLE_TIMEOUT:-20}
+      DB_POOL_CONNECT_TIMEOUT: ${DB_POOL_CONNECT_TIMEOUT:-10}
+      DB_POOL_MAX_LIFETIME: ${DB_POOL_MAX_LIFETIME:-0}
     depends_on:
       db:
         condition: service_healthy
@@ -33,7 +38,7 @@ services:
       interval: 30s
       timeout: 3s
       retries: 3
-      start_period: 5s
+      start_period: 10s
     restart: unless-stopped
 
 volumes:

@@ -2,8 +2,9 @@ import 'dotenv/config';
 import { createApp, createPgDeps } from './app.js';
 import { startTeamScenario } from './mock/mock-team.js';
 import { SERVER_PORT } from './config.js';
+import { resolveDatabaseUrl } from './db/index.js';
 
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = resolveDatabaseUrl();
 
 let app;
 if (databaseUrl) {

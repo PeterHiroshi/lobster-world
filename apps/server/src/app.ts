@@ -45,6 +45,9 @@ import { PgCodeReviewRepo } from './db/repositories/code-review-repo.js';
 import { PgA2ARepo } from './db/repositories/a2a-repo.js';
 import { PgAuditRepo } from './db/repositories/audit-repo.js';
 import { PgCommsRepo } from './db/repositories/comms-repo.js';
+import { PgLobsterRepo } from './db/repositories/lobster-repo.js';
+import { PgKeyStoreRepo } from './db/repositories/key-store-repo.js';
+import { PgSkinPresetRepo } from './db/repositories/skin-preset-repo.js';
 
 export interface AppDeps {
   connections: ConnectionManager;
@@ -95,9 +98,11 @@ export async function createPgDeps(databaseUrl: string): Promise<{ deps: AppDeps
   const dbConnection = await createDatabaseConnection(databaseUrl);
   const { db } = dbConnection;
   const scene = new SceneEngine();
+  const lobsterRepo = new PgLobsterRepo(db);
+  const skinPresetRepo = new PgSkinPresetRepo(db);
   const deps: AppDeps = {
     connections: new ConnectionManager(),
-    registry: new LobsterRegistry(),
+    registry: new LobsterRegistry({ lobsterRepo, skinPresetRepo }),
     scene,
     dialogue: new DialogueRouter(),
     circuitBreaker: new CircuitBreaker(),
@@ -113,7 +118,7 @@ export async function createPgDeps(databaseUrl: string): Promise<{ deps: AppDeps
     docs: new DocManager(new PgDocRepo(db)),
     codeReview: new CodeReviewManager(new PgCodeReviewRepo(db)),
     a2aRouter: new A2ARouter(new PgA2ARepo(db)),
-    keyStore: new KeyStore(),
+    keyStore: new KeyStore(new PgKeyStoreRepo(db)),
   };
   return { deps, dbConnection };
 }
@@ -159,8 +164,33 @@ export async function createApp(deps?: Partial<AppDeps>, dbConnection?: Database
   const server = Fastify({ logger: true });
   await server.register(cors, { origin: CORS_ORIGINS });
 
-  // Health check endpoint
+  // Health check endpoints
   server.get('/health', async () => ({ status: 'ok', uptime: process.uptime() }));
+
+  server.get('/health/db', async () => {
+    if (!dbConnection) {
+      return { status: 'skipped', message: 'No database configured (in-memory mode)' };
+    }
+    try {
+      const start = Date.now();
+      await dbConnection.sql`SELECT 1`;
+      const latencyMs = Date.now() - start;
+      return {
+        status: 'ok',
+        latencyMs,
+        pool: {
+          max: dbConnection.poolConfig.max,
+          idleTimeout: dbConnection.poolConfig.idleTimeout,
+          connectTimeout: dbConnection.poolConfig.connectTimeout,
+        },
+      };
+    } catch (err) {
+      return {
+        status: 'error',
+        message: (err as Error).message,
+      };
+    }
+  });
 
   // Serve static web build in production
   const currentDir = dirname(fileURLToPath(import.meta.url));

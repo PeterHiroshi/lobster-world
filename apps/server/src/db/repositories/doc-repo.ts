@@ -1,5 +1,5 @@
 import type { MemoryEntry, MemoryCategory } from '@lobster-world/protocol';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { Database } from '../connection.js';
 import { documents } from '../schema.js';
 
@@ -140,7 +140,7 @@ export class PgDocRepo implements DocRepository {
   }
 
   async count(): Promise<number> {
-    const rows = await this.db.select().from(documents);
-    return rows.length;
+    const [result] = await this.db.select({ count: sql<number>`count(*)` }).from(documents);
+    return Number(result.count);
   }
 }

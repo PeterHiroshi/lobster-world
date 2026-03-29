@@ -1,5 +1,5 @@
 import type { Task, TaskStatus, TaskPriority } from '@lobster-world/protocol';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { Database } from '../connection.js';
 import { tasks as tasksTable } from '../schema.js';
 
@@ -174,7 +174,7 @@ export class PgTaskRepo implements TaskRepository {
   }
 
   async count(): Promise<number> {
-    const rows = await this.db.select().from(tasksTable);
-    return rows.length;
+    const [result] = await this.db.select({ count: sql<number>`count(*)` }).from(tasksTable);
+    return Number(result.count);
   }
 }
