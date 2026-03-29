@@ -164,8 +164,33 @@ export async function createApp(deps?: Partial<AppDeps>, dbConnection?: Database
   const server = Fastify({ logger: true });
   await server.register(cors, { origin: CORS_ORIGINS });
 
-  // Health check endpoint
+  // Health check endpoints
   server.get('/health', async () => ({ status: 'ok', uptime: process.uptime() }));
+
+  server.get('/health/db', async () => {
+    if (!dbConnection) {
+      return { status: 'skipped', message: 'No database configured (in-memory mode)' };
+    }
+    try {
+      const start = Date.now();
+      await dbConnection.sql`SELECT 1`;
+      const latencyMs = Date.now() - start;
+      return {
+        status: 'ok',
+        latencyMs,
+        pool: {
+          max: dbConnection.poolConfig.max,
+          idleTimeout: dbConnection.poolConfig.idleTimeout,
+          connectTimeout: dbConnection.poolConfig.connectTimeout,
+        },
+      };
+    } catch (err) {
+      return {
+        status: 'error',
+        message: (err as Error).message,
+      };
+    }
+  });
 
   // Serve static web build in production
   const currentDir = dirname(fileURLToPath(import.meta.url));
