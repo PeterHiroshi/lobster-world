@@ -49,6 +49,9 @@ COPY --from=builder /app/packages/social-proxy/package.json packages/social-prox
 COPY --from=builder /app/apps/server/dist apps/server/dist
 COPY --from=builder /app/apps/web/dist apps/web/dist
 
+# Copy Drizzle migration files (needed for programmatic migration at runtime)
+COPY --from=builder /app/apps/server/drizzle apps/server/drizzle
+
 EXPOSE 3001
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

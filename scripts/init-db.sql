@@ -1,9 +1,26 @@
 -- =============================================================================
--- Lobster World — Database Initialization
+-- Lobster World — Database Bootstrap
 -- =============================================================================
--- This script runs once when the PostgreSQL container is first created.
--- It creates all tables required by the application.
--- For ongoing migrations, use drizzle-kit (pnpm drizzle-kit push).
+-- This script runs once when the PostgreSQL container is first created
+-- (via docker-entrypoint-initdb.d). It ensures the database exists and is
+-- ready for Drizzle migrations.
+--
+-- Schema creation and indexes are managed by Drizzle migrations:
+--   pnpm -F @lobster-world/server db:migrate
+--
+-- For fresh setups, run migrations after the container is healthy:
+--   docker compose up -d db
+--   pnpm -F @lobster-world/server db:migrate
+--   pnpm -F @lobster-world/server db:seed    # optional
+-- =============================================================================
+
+-- Enable useful extensions
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";   -- gen_random_uuid()
+
+-- =============================================================================
+-- Fallback: Create tables directly for environments where Drizzle CLI
+-- is not available (e.g., production Docker with no dev tooling).
+-- These use IF NOT EXISTS so they're safe alongside Drizzle migrations.
 -- =============================================================================
 
 -- Lobster registry
@@ -122,10 +139,18 @@ CREATE TABLE IF NOT EXISTS skin_presets (
   eye_style TEXT
 );
 
+-- Drizzle migration tracking table (so Drizzle sees these as already applied)
+CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
+  id SERIAL PRIMARY KEY,
+  hash TEXT NOT NULL,
+  created_at BIGINT
+);
+
 -- =============================================================================
 -- Indexes for common query patterns
 -- =============================================================================
 
+CREATE INDEX IF NOT EXISTS idx_lobsters_status ON lobsters (status);
 CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks (project_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks (status);
 CREATE INDEX IF NOT EXISTS idx_tasks_assignee_id ON tasks (assignee_id);
@@ -138,4 +163,3 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log (timestamp);
 CREATE INDEX IF NOT EXISTS idx_agent_messages_from_to ON agent_messages (from_id, to_id);
 CREATE INDEX IF NOT EXISTS idx_agent_messages_timestamp ON agent_messages (timestamp);
 CREATE INDEX IF NOT EXISTS idx_skin_presets_lobster_id ON skin_presets (lobster_id);
-CREATE INDEX IF NOT EXISTS idx_lobsters_status ON lobsters (status);
