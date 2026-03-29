@@ -87,3 +87,21 @@ export const agentMessages = pgTable('agent_messages', {
   context: jsonb('context').$type<{ taskId?: string; docId?: string }>(),
   timestamp: integer('timestamp').notNull(),
 });
+
+export const publicKeys = pgTable('public_keys', {
+  lobsterId: text('lobster_id').primaryKey(),
+  x25519PublicKey: text('x25519_public_key').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+export const skinPresets = pgTable('skin_presets', {
+  id: text('id').primaryKey(),
+  lobsterId: text('lobster_id').notNull(),
+  bodyColor: text('body_color').notNull(),
+  claw1Color: text('claw1_color'),
+  claw2Color: text('claw2_color'),
+  accessoryType: text('accessory_type'),
+  tailStyle: text('tail_style'),
+  eyeColor: text('eye_color'),
+  eyeStyle: text('eye_style'),
+});

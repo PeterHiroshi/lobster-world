@@ -3,21 +3,38 @@ import type {
   LobsterState,
   StatusType,
   LobsterSkin,
+  LobsterSource,
 } from '@lobster-world/protocol';
 import {
   CUSTOMIZATION_MAX_PRESETS,
   CUSTOMIZATION_HEX_COLOR_REGEX,
 } from '@lobster-world/protocol';
+import type { LobsterRepository } from '../db/repositories/lobster-repo.js';
+import type { SkinPresetRepository } from '../db/repositories/skin-preset-repo.js';
+import { InMemorySkinPresetRepo } from '../db/repositories/skin-preset-repo.js';
 
 const SPAWN_RANGE_X = 10;
 const SPAWN_RANGE_Z = 10;
 
+export interface LobsterRegistryOpts {
+  lobsterRepo?: LobsterRepository;
+  skinPresetRepo?: SkinPresetRepository;
+}
+
 export class LobsterRegistry {
+  // Runtime state is always in-memory (positions, animations, etc.)
+  // The repos persist profile data and skin presets across restarts
   private lobsters: Map<string, LobsterState> = new Map();
   private tokens: Map<string, string> = new Map();
-  private skinPresets: Map<string, LobsterSkin[]> = new Map();
+  private lobsterRepo?: LobsterRepository;
+  private skinPresetRepo: SkinPresetRepository;
 
-  register(profile: PublicProfile, token: string): LobsterState {
+  constructor(opts?: LobsterRegistryOpts) {
+    this.lobsterRepo = opts?.lobsterRepo;
+    this.skinPresetRepo = opts?.skinPresetRepo ?? new InMemorySkinPresetRepo();
+  }
+
+  register(profile: PublicProfile, token: string, source?: LobsterSource): LobsterState {
     const state: LobsterState = {
       id: profile.id,
       profile,
@@ -35,13 +52,23 @@ export class LobsterRegistry {
     this.lobsters.set(profile.id, state);
     this.tokens.set(profile.id, token);
 
+    // Fire-and-forget persistence of profile data
+    if (this.lobsterRepo) {
+      this.lobsterRepo.upsert(profile, source).catch(() => {
+        // Silently ignore persistence failures — in-memory state is authoritative
+      });
+    }
+
     return state;
   }
 
   unregister(lobsterId: string): void {
     this.lobsters.delete(lobsterId);
     this.tokens.delete(lobsterId);
-    this.skinPresets.delete(lobsterId);
+
+    if (this.lobsterRepo) {
+      this.lobsterRepo.updateStatus(lobsterId, 'offline').catch(() => {});
+    }
   }
 
   validateToken(lobsterId: string, token: string): boolean {
@@ -83,6 +110,9 @@ export class LobsterRegistry {
     const existing = this.lobsters.get(lobsterId);
     if (existing) {
       existing.status = status;
+      if (this.lobsterRepo) {
+        this.lobsterRepo.updateStatus(lobsterId, status).catch(() => {});
+      }
     }
   }
 
@@ -113,30 +143,20 @@ export class LobsterRegistry {
     return updated;
   }
 
-  getCustomizationPresets(lobsterId: string): LobsterSkin[] {
-    return this.skinPresets.get(lobsterId) ?? [];
+  async getCustomizationPresets(lobsterId: string): Promise<LobsterSkin[]> {
+    return this.skinPresetRepo.getByLobster(lobsterId);
   }
 
-  savePreset(lobsterId: string, skin: LobsterSkin): boolean {
+  async savePreset(lobsterId: string, skin: LobsterSkin): Promise<boolean> {
     if (!this.lobsters.has(lobsterId)) return false;
     if (!CUSTOMIZATION_HEX_COLOR_REGEX.test(skin.bodyColor)) return false;
 
-    const presets = this.skinPresets.get(lobsterId) ?? [];
-    if (presets.length >= CUSTOMIZATION_MAX_PRESETS) return false;
-
-    presets.push({ ...skin, lobsterId });
-    this.skinPresets.set(lobsterId, presets);
-    return true;
+    const count = await this.skinPresetRepo.count(lobsterId);
+    if (count >= CUSTOMIZATION_MAX_PRESETS) return false;
+    return this.skinPresetRepo.save(lobsterId, { ...skin, lobsterId });
   }
 
-  deletePreset(lobsterId: string, skinId: string): boolean {
-    const presets = this.skinPresets.get(lobsterId);
-    if (!presets) return false;
-
-    const idx = presets.findIndex((p) => p.id === skinId);
-    if (idx === -1) return false;
-
-    presets.splice(idx, 1);
-    return true;
+  async deletePreset(lobsterId: string, skinId: string): Promise<boolean> {
+    return this.skinPresetRepo.delete(lobsterId, skinId);
   }
 }
