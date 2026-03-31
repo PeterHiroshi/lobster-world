@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:pg": "vitest run tests/pg/",
+    "test:smoke": "vitest run tests/pg/smoke.pg.test.ts",
     "test:all": "vitest run",
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist",
