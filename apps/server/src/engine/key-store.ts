@@ -1,31 +1,31 @@
 import type { PublicKeyRecord } from '@lobster-world/protocol';
+import type { KeyStoreRepository } from '../db/repositories/key-store-repo.js';
+import { InMemoryKeyStoreRepo } from '../db/repositories/key-store-repo.js';
 
 export class KeyStore {
-  private keys = new Map<string, PublicKeyRecord>();
+  private repo: KeyStoreRepository;
 
-  store(lobsterId: string, x25519PublicKey: string): PublicKeyRecord {
-    const record: PublicKeyRecord = {
-      lobsterId,
-      x25519PublicKey,
-      updatedAt: Date.now(),
-    };
-    this.keys.set(lobsterId, record);
-    return record;
+  constructor(repo?: KeyStoreRepository) {
+    this.repo = repo ?? new InMemoryKeyStoreRepo();
   }
 
-  get(lobsterId: string): PublicKeyRecord | undefined {
-    return this.keys.get(lobsterId);
+  store(lobsterId: string, x25519PublicKey: string): Promise<PublicKeyRecord> {
+    return this.repo.store(lobsterId, x25519PublicKey);
   }
 
-  getAll(): PublicKeyRecord[] {
-    return [...this.keys.values()];
+  get(lobsterId: string): Promise<PublicKeyRecord | undefined> {
+    return this.repo.get(lobsterId);
   }
 
-  remove(lobsterId: string): boolean {
-    return this.keys.delete(lobsterId);
+  getAll(): Promise<PublicKeyRecord[]> {
+    return this.repo.getAll();
   }
 
-  size(): number {
-    return this.keys.size;
+  remove(lobsterId: string): Promise<boolean> {
+    return this.repo.remove(lobsterId);
+  }
+
+  size(): Promise<number> {
+    return this.repo.size();
   }
 }

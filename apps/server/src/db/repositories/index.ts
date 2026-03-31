@@ -15,3 +15,12 @@ export { InMemoryAuditRepo, PgAuditRepo } from './audit-repo.js';
 
 export type { CommsRepository } from './comms-repo.js';
 export { InMemoryCommsRepo, PgCommsRepo } from './comms-repo.js';
+
+export type { LobsterRepository, LobsterRecord } from './lobster-repo.js';
+export { InMemoryLobsterRepo, PgLobsterRepo } from './lobster-repo.js';
+
+export type { KeyStoreRepository } from './key-store-repo.js';
+export { InMemoryKeyStoreRepo, PgKeyStoreRepo } from './key-store-repo.js';
+
+export type { SkinPresetRepository } from './skin-preset-repo.js';
+export { InMemorySkinPresetRepo, PgSkinPresetRepo } from './skin-preset-repo.js';

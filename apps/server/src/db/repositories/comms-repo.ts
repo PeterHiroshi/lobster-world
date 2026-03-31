@@ -1,5 +1,5 @@
 import type { AgentMessage, Meeting, MessageType } from '@lobster-world/protocol';
-import { eq } from 'drizzle-orm';
+import { eq, sql, desc } from 'drizzle-orm';
 import type { Database } from '../connection.js';
 import { meetings as meetingsTable, agentMessages } from '../schema.js';
 
@@ -123,8 +123,8 @@ export class PgCommsRepo implements CommsRepository {
   }
 
   async getRecentMessages(count: number): Promise<AgentMessage[]> {
-    const rows = await this.db.select().from(agentMessages).orderBy(agentMessages.timestamp).limit(count);
-    return rows.map(rowToMessage);
+    const rows = await this.db.select().from(agentMessages).orderBy(desc(agentMessages.timestamp)).limit(count);
+    return rows.map(rowToMessage).reverse();
   }
 
   async getAllMessages(): Promise<AgentMessage[]> {
@@ -133,8 +133,8 @@ export class PgCommsRepo implements CommsRepository {
   }
 
   async messageCount(): Promise<number> {
-    const rows = await this.db.select().from(agentMessages);
-    return rows.length;
+    const [result] = await this.db.select({ count: sql<number>`count(*)` }).from(agentMessages);
+    return Number(result.count);
   }
 
   async saveMeeting(meeting: Meeting): Promise<void> {
@@ -168,7 +168,7 @@ export class PgCommsRepo implements CommsRepository {
   }
 
   async meetingCount(): Promise<number> {
-    const rows = await this.db.select().from(meetingsTable);
-    return rows.length;
+    const [result] = await this.db.select({ count: sql<number>`count(*)` }).from(meetingsTable);
+    return Number(result.count);
   }
 }

@@ -50,6 +50,9 @@ export const MOCK_BEHAVIOR_MAX_INTERVAL_MS = 15000;
 export const MOCK_DIALOGUE_MIN_TURNS = 3;
 export const MOCK_DIALOGUE_MAX_TURNS = 5;
 
+// WebSocket connection limits
+export const WS_MAX_CONNECTIONS = 100;
+
 // Scene defaults
 export const DEFAULT_SCENE_ID = 'office-main';
 export const DEFAULT_SCENE_NAME = 'Virtual Office';

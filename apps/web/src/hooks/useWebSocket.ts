@@ -3,7 +3,12 @@ import type { RenderEvent } from '@lobster-world/protocol';
 import { useWorldStore } from '../store/useWorldStore';
 import { WS_VIEWER_URL, RECONNECT_BASE_DELAY_MS, RECONNECT_MAX_RETRIES } from '../lib/constants';
 
-export function useWebSocket() {
+/**
+ * Viewer WebSocket hook — only connects when `enabled` is true.
+ * This prevents the "WebSocket connection error" on the lobby/landing screen
+ * where the viewer WS is not yet needed.
+ */
+export function useWebSocket(enabled = true) {
   const handleRenderEvent = useWorldStore((s) => s.handleRenderEvent);
   const setConnectionStatus = useWorldStore((s) => s.setConnectionStatus);
   const retriesRef = useRef(0);
@@ -12,6 +17,13 @@ export function useWebSocket() {
 
   useEffect(() => {
     mountedRef.current = true;
+
+    if (!enabled) {
+      setConnectionStatus('disconnected');
+      return () => {
+        mountedRef.current = false;
+      };
+    }
 
     function connect() {
       if (!mountedRef.current) return;
@@ -54,6 +66,7 @@ export function useWebSocket() {
       };
     }
 
+    retriesRef.current = 0;
     connect();
 
     return () => {
@@ -63,5 +76,5 @@ export function useWebSocket() {
         wsRef.current = null;
       }
     };
-  }, [handleRenderEvent, setConnectionStatus]);
+  }, [enabled, handleRenderEvent, setConnectionStatus]);
 }

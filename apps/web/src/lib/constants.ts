@@ -7,25 +7,35 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localho
 export const RECONNECT_BASE_DELAY_MS = 1000;
 export const RECONNECT_MAX_RETRIES = 5;
 
+// Social WS retry
+export const SOCIAL_WS_MAX_RETRIES = 3;
+export const SOCIAL_WS_BASE_DELAY_MS = 1000;
+export const SOCIAL_WS_ERROR_MESSAGE =
+  'Unable to connect to the social server. Please check that the server is running and try again.';
+export const SOCIAL_WS_ERROR_SUGGEST_DEMO =
+  'Unable to connect to the server. Try Demo mode instead — it works without a server.';
+
 // Animation
 export const POSITION_LERP_FACTOR = 0.05;
 export const IDLE_BOB_AMPLITUDE = 0.05;
 export const IDLE_BOB_SPEED = 2;
 export const BREATHING_SPEED = 0.5;
 export const CLAW_OSCILLATION_SPEED = 12;
-export const ENTER_EXIT_SCALE_SPEED = 0.08;
+export const ENTER_EXIT_SCALE_SPEED = 0.15;
 
 // UI
 export const BUBBLE_TIMEOUT_MS = 5000;
 
 // Camera
-export const CAMERA_INITIAL_POSITION: [number, number, number] = [8, 8, 8];
+export const CAMERA_INITIAL_POSITION: [number, number, number] = [12, 10, 12];
 export const CAMERA_LOOK_AT: [number, number, number] = [0, 0, 0];
 export const CAMERA_FOCUS_OFFSET: [number, number, number] = [2, 2, 2];
 export const CAMERA_LERP_FACTOR = 0.03;
 
 // Scene
 export const FLOOR_SIZE = 24;
+export const SHADOW_MAP_SIZE = 512;
+export const AMBIENT_DUST_COUNT = 20;
 export const DESK_POSITIONS: [number, number][] = [
   [-3, -2], [0, -2], [3, -2],
   [-3, 2], [0, 2], [3, 2],
@@ -44,14 +54,14 @@ export const TASK_STATUS_COLORS: Record<string, string> = {
 };
 
 // Lobster
-export const LOBSTER_SCALE = 0.5;
+export const LOBSTER_SCALE = 1.5;
 export const LEG_PAIRS = 4;
 export const LEG_RADIUS = 0.012;
 export const LEG_LENGTH = 0.1;
 export const LEG_SPACING = 0.06;
 export const PUPIL_TRACK_FACTOR = 0.015;
-export const BODY_SEGMENTS_CAP = 16;
-export const BODY_SEGMENTS_RADIAL = 32;
+export const BODY_SEGMENTS_CAP = 8;
+export const BODY_SEGMENTS_RADIAL = 16;
 
 // Entrance animation
 export const ENTRANCE_POSITION: [number, number, number] = [0, 0, -10];

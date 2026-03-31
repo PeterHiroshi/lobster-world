@@ -43,15 +43,15 @@ const TaskCard3DInner = ({ task, position }: TaskCard3DProps) => {
     currentZ.current += (targetZ - currentZ.current) * Math.min(LERP_SPEED * delta, 1);
     meshRef.current.position.z = currentZ.current;
 
-    // Pulse/glow effect for animated tasks
+    // Pulse effect for animated tasks — vary opacity
     if (hasAnimation) {
       const material = meshRef.current.material;
-      if ('emissiveIntensity' in material) {
+      if ('opacity' in material) {
         const pulse =
           PULSE_MIN_INTENSITY +
           (1 - PULSE_MIN_INTENSITY) *
             (0.5 + 0.5 * Math.sin(_state.clock.elapsedTime * PULSE_SPEED));
-        (material as { emissiveIntensity: number }).emissiveIntensity = pulse;
+        (material as { opacity: number }).opacity = pulse;
       }
     }
   });
@@ -69,10 +69,9 @@ const TaskCard3DInner = ({ task, position }: TaskCard3DProps) => {
         onPointerLeave={() => setHovered(false)}
       >
         <boxGeometry args={[CARD_WIDTH, CARD_HEIGHT, CARD_DEPTH]} />
-        <meshStandardMaterial
+        <meshBasicMaterial
           color={color}
-          emissive={color}
-          emissiveIntensity={hasAnimation ? 0.6 : 0}
+          transparent={hasAnimation}
         />
       </mesh>
       <Text

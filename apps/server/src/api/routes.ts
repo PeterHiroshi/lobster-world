@@ -464,13 +464,13 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
       if (!body.lobsterId || !body.x25519PublicKey) {
         return reply.status(400).send({ error: 'lobsterId and x25519PublicKey are required' });
       }
-      const record = keyStore.store(body.lobsterId, body.x25519PublicKey);
+      const record = await keyStore.store(body.lobsterId, body.x25519PublicKey);
       return reply.status(201).send(record);
     });
 
     app.get('/api/crypto/keys/:lobsterId', async (request, reply) => {
       const { lobsterId } = request.params as { lobsterId: string };
-      const record = keyStore.get(lobsterId);
+      const record = await keyStore.get(lobsterId);
       if (!record) {
         return reply.status(404).send({ error: 'Public key not found' });
       }
@@ -478,7 +478,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
     });
 
     app.get('/api/crypto/keys', async () => {
-      return keyStore.getAll();
+      return await keyStore.getAll();
     });
   }
 
@@ -511,7 +511,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
     if (!body.skin || !body.skin.bodyColor || !body.skin.id) {
       return reply.status(400).send({ error: 'skin with id and bodyColor is required' });
     }
-    const saved = registry.savePreset(id, body.skin);
+    const saved = await registry.savePreset(id, body.skin);
     if (!saved) {
       return reply.status(400).send({ error: 'Lobster not found, invalid skin, or preset limit reached' });
     }
@@ -520,7 +520,7 @@ export function registerRoutes(app: FastifyInstance, deps: RoutesDeps): void {
 
   app.delete('/api/lobsters/:id/skins/:skinId', async (request, reply) => {
     const { id, skinId } = request.params as { id: string; skinId: string };
-    const deleted = registry.deletePreset(id, skinId);
+    const deleted = await registry.deletePreset(id, skinId);
     if (!deleted) {
       return reply.status(404).send({ error: 'Preset not found' });
     }

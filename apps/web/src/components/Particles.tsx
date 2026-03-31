@@ -48,7 +48,7 @@ const ConfettiEffect = memo(function ConfettiEffect({ effect }: { effect: Effect
       {pieces.map((piece, i) => (
         <mesh key={i}>
           <boxGeometry args={[0.04, 0.04, 0.01]} />
-          <meshStandardMaterial color={piece.color} />
+          <meshBasicMaterial color={piece.color} />
         </mesh>
       ))}
     </group>
@@ -70,16 +70,7 @@ const SparkleEffect = memo(function SparkleEffect({ effect }: { effect: EffectEn
 });
 
 const AmbientDust = memo(function AmbientDust() {
-  return (
-    <Sparkles
-      count={40}
-      scale={20}
-      size={1}
-      speed={0.3}
-      opacity={0.3}
-      color="#ffffff"
-    />
-  );
+  return null;
 });
 
 export const Particles = memo(function Particles() {

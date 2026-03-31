@@ -1,7 +1,11 @@
 import { memo, useRef, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
+import { Vector3 } from 'three';
 import type { Group, Mesh } from 'three';
 import type { LobsterState, AnimationType } from '@lobster-world/protocol';
+
+// Reusable Vector3 for eye pupil tracking — avoids per-frame allocation
+const _camDir = new Vector3();
 import { LobsterLabel } from './LobsterLabel';
 import { useWorldStore } from '../store/useWorldStore';
 import {
@@ -133,7 +137,7 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
   const rightClawRef = useRef<Group>(null);
   const leftPupilRef = useRef<Mesh>(null);
   const rightPupilRef = useRef<Mesh>(null);
-  const scaleRef = useRef(0);
+  const scaleRef = useRef(0.01);
   const setFocusLobster = useWorldStore((s) => s.setFocusLobster);
   const selectedLobsterId = useWorldStore((s) => s.selectedLobsterId);
   const setSelectedLobster = useWorldStore((s) => s.setSelectedLobster);
@@ -220,11 +224,11 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
     // Animate legs
     animateLegs(legRefs, effectiveAnimation, time);
 
-    // Eye pupils track camera
+    // Eye pupils track camera (reuse _camDir to avoid GC pressure)
     if (leftPupilRef.current && rightPupilRef.current && groupRef.current) {
-      const camDir = camera.position.clone().sub(groupRef.current.position).normalize();
-      const px = camDir.x * PUPIL_TRACK_FACTOR;
-      const py = camDir.y * PUPIL_TRACK_FACTOR;
+      _camDir.copy(camera.position).sub(groupRef.current.position).normalize();
+      const px = _camDir.x * PUPIL_TRACK_FACTOR;
+      const py = _camDir.y * PUPIL_TRACK_FACTOR;
       leftPupilRef.current.position.x = px;
       leftPupilRef.current.position.y = py;
       leftPupilRef.current.position.z = 0.03;
@@ -246,7 +250,7 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
       ref={groupRef}
       position={[lobster.position.x, 0, lobster.position.z]}
       rotation={[0, lobster.rotation, 0]}
-      scale={[0, 0, 0]}
+      scale={[0.01, 0.01, 0.01]}
       onClick={(e) => {
         e.stopPropagation();
         setSelectedLobster(isSelected ? null : lobster.id);
@@ -258,34 +262,34 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
     >
       <group ref={bodyGroupRef} position={[0, 0.25, 0]}>
         {/* Body — smoother capsule */}
-        <mesh castShadow>
+        <mesh>
           <capsuleGeometry args={[0.15, 0.3, BODY_SEGMENTS_CAP, BODY_SEGMENTS_RADIAL]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.4} metalness={0.1} />
+          <meshBasicMaterial color={bodyColor} />
         </mesh>
 
         {/* Left Claw — pincer shape */}
         <group ref={leftClawRef} position={[-0.22, 0, 0.15]}>
           {/* Upper jaw */}
-          <mesh castShadow position={[0, 0.015, 0.04]} rotation={[0, 0, 0.15]}>
+          <mesh position={[0, 0.015, 0.04]} rotation={[0, 0, 0.15]}>
             <boxGeometry args={[0.06, 0.025, 0.12]} />
-            <meshStandardMaterial color={leftClawColor} roughness={0.3} />
+            <meshBasicMaterial color={leftClawColor} />
           </mesh>
           {/* Lower jaw */}
-          <mesh castShadow position={[0, -0.015, 0.04]} rotation={[0, 0, -0.15]}>
+          <mesh position={[0, -0.015, 0.04]} rotation={[0, 0, -0.15]}>
             <boxGeometry args={[0.06, 0.025, 0.12]} />
-            <meshStandardMaterial color={leftClawColor} roughness={0.3} />
+            <meshBasicMaterial color={leftClawColor} />
           </mesh>
         </group>
 
         {/* Right Claw — pincer shape */}
         <group ref={rightClawRef} position={[0.22, 0, 0.15]}>
-          <mesh castShadow position={[0, 0.015, 0.04]} rotation={[0, 0, -0.15]}>
+          <mesh position={[0, 0.015, 0.04]} rotation={[0, 0, -0.15]}>
             <boxGeometry args={[0.06, 0.025, 0.12]} />
-            <meshStandardMaterial color={rightClawColor} roughness={0.3} />
+            <meshBasicMaterial color={rightClawColor} />
           </mesh>
-          <mesh castShadow position={[0, -0.015, 0.04]} rotation={[0, 0, 0.15]}>
+          <mesh position={[0, -0.015, 0.04]} rotation={[0, 0, 0.15]}>
             <boxGeometry args={[0.06, 0.025, 0.12]} />
-            <meshStandardMaterial color={rightClawColor} roughness={0.3} />
+            <meshBasicMaterial color={rightClawColor} />
           </mesh>
         </group>
 
@@ -301,9 +305,9 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
               position={[side * 0.12, -0.15, zPos]}
               rotation={[0, 0, side * 0.3]}
             >
-              <mesh castShadow>
+              <mesh>
                 <cylinderGeometry args={[LEG_RADIUS, LEG_RADIUS * 0.6, LEG_LENGTH, 4]} />
-                <meshStandardMaterial color={bodyColor} roughness={0.4} />
+                <meshBasicMaterial color={bodyColor} />
               </mesh>
             </group>
           );
@@ -313,11 +317,11 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
         <group position={[-0.06, 0.2, 0.1]}>
           <mesh>
             <sphereGeometry args={[0.04, 12, 12]} />
-            <meshStandardMaterial color="white" />
+            <meshBasicMaterial color="white" />
           </mesh>
           <mesh ref={leftPupilRef} position={[0, 0, 0.03]}>
             <sphereGeometry args={[0.02, 8, 8]} />
-            <meshStandardMaterial color={eyeColor} />
+            <meshBasicMaterial color={eyeColor} />
           </mesh>
         </group>
 
@@ -325,30 +329,30 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
         <group position={[0.06, 0.2, 0.1]}>
           <mesh>
             <sphereGeometry args={[0.04, 12, 12]} />
-            <meshStandardMaterial color="white" />
+            <meshBasicMaterial color="white" />
           </mesh>
           <mesh ref={rightPupilRef} position={[0, 0, 0.03]}>
             <sphereGeometry args={[0.02, 8, 8]} />
-            <meshStandardMaterial color={eyeColor} />
+            <meshBasicMaterial color={eyeColor} />
           </mesh>
         </group>
 
         {/* Tail */}
-        <mesh position={[0, -0.05, -0.25]} rotation={[0.3, 0, 0]} castShadow>
+        <mesh position={[0, -0.05, -0.25]} rotation={[0.3, 0, 0]}>
           <coneGeometry args={[0.08, 0.15, 8]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.4} />
+          <meshBasicMaterial color={bodyColor} />
         </mesh>
 
         {/* Left Antenna */}
         <mesh position={[-0.04, 0.3, 0.08]} rotation={[0.3, 0, -0.3]}>
           <cylinderGeometry args={[0.008, 0.005, 0.15, 4]} />
-          <meshStandardMaterial color={bodyColor} />
+          <meshBasicMaterial color={bodyColor} />
         </mesh>
 
         {/* Right Antenna */}
         <mesh position={[0.04, 0.3, 0.08]} rotation={[0.3, 0, 0.3]}>
           <cylinderGeometry args={[0.008, 0.005, 0.15, 4]} />
-          <meshStandardMaterial color={bodyColor} />
+          <meshBasicMaterial color={bodyColor} />
         </mesh>
       </group>
 
@@ -356,7 +360,7 @@ export const Lobster = memo(function Lobster({ lobster }: LobsterProps) {
       {isSelected && (
         <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.3, 0.4, 32]} />
-          <meshStandardMaterial color={bodyColor} transparent opacity={0.4} emissive={bodyColor} emissiveIntensity={0.5} />
+          <meshBasicMaterial color={bodyColor} transparent opacity={0.4} />
         </mesh>
       )}
 

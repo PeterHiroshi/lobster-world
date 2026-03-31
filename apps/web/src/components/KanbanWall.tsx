@@ -44,7 +44,7 @@ const KanbanWallInner = () => {
       {/* Physical wall */}
       <mesh position={[0, WALL_Y_CENTER, 0]}>
         <boxGeometry args={[WALL_WIDTH, WALL_HEIGHT, WALL_DEPTH]} />
-        <meshStandardMaterial color="#f0f0f0" />
+        <meshBasicMaterial color="#f0f0f0" />
       </mesh>
 
       {/* Column headers and task cards */}

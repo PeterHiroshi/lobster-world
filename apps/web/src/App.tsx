@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, lazy, Suspense } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { StatsPanel } from './panels/StatsPanel';
 import { ChatPanel } from './panels/ChatPanel';
 import { ConnectionStatus } from './panels/ConnectionStatus';
@@ -15,9 +15,8 @@ import { LandingPage } from './components/LandingPage';
 import { PermissionRequestOverlay } from './components/PermissionRequestOverlay';
 import { DemoTour } from './components/DemoTour';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Scene } from './components/Scene';
 import { useIsMobile } from './hooks/useMediaQuery';
-
-const Scene = lazy(() => import('./components/Scene').then((m) => ({ default: m.Scene })));
 import { useWebSocket } from './hooks/useWebSocket';
 import { useWorldStore } from './store/useWorldStore';
 import { DemoSocialProxy } from './lib/DemoSocialProxy';
@@ -26,10 +25,14 @@ import { WS_SOCIAL_URL } from './lib/constants';
 import type { LobbyProfile } from '@lobster-world/protocol';
 
 export function App() {
-  useWebSocket();
+  const phase = useWorldStore((s) => s.lobbyState.phase);
+
+  // Only connect viewer WebSocket after entering the world — avoids
+  // "WebSocket connection error" on lobby/landing screens.
+  useWebSocket(phase === 'joined');
+
   const isMobile = useIsMobile();
 
-  const phase = useWorldStore((s) => s.lobbyState.phase);
   const setLobbyPhase = useWorldStore((s) => s.setLobbyPhase);
   const setLobbyError = useWorldStore((s) => s.setLobbyError);
   const setSessionToken = useWorldStore((s) => s.setSessionToken);
@@ -82,17 +85,9 @@ export function App() {
 
   const handleWatchDemo = useCallback(() => {
     demModeRef.current = true;
-    const demoProfile: LobbyProfile = {
-      displayName: 'Demo Visitor',
-      color: '#6366f1',
-      bio: 'Watching the demo',
-      skills: ['coding'],
-      dailyTokenLimit: 50000,
-      sessionTokenLimit: 5000,
-      permissionPreset: 'open',
-    };
-    connectProxy(demoProfile);
-  }, [connectProxy]);
+    setSessionToken('demo-visitor');
+    startDemoScenario();
+  }, [setSessionToken]);
 
   const handleJoin = useCallback(
     (profile: LobbyProfile) => connectProxy(profile),
@@ -110,9 +105,7 @@ export function App() {
   return (
     <div className="relative w-full h-full">
       <ErrorBoundary>
-        <Suspense fallback={<div className="flex items-center justify-center w-full h-full text-gray-400">Loading 3D scene...</div>}>
-          <Scene />
-        </Suspense>
+        <Scene />
       </ErrorBoundary>
       <StatsPanel />
       <ChatPanel />

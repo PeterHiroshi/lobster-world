@@ -190,7 +190,14 @@ function LobbyScreenInner({ onJoin }: LobbyScreenProps) {
         {/* Error */}
         {lobbyState.error && (
           <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-300 text-sm" data-testid="lobby-error">
-            {lobbyState.error}
+            <p>{lobbyState.error}</p>
+            <button
+              onClick={handleSubmit}
+              className="mt-2 px-4 py-1.5 border border-indigo-500 text-indigo-400 hover:bg-indigo-500/20 rounded-lg text-sm font-medium transition-colors"
+              data-testid="retry-button"
+            >
+              Retry
+            </button>
           </div>
         )}
 

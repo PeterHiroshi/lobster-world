@@ -8,52 +8,52 @@ describe('KeyStore', () => {
     store = new KeyStore();
   });
 
-  it('stores and retrieves a public key', () => {
-    const record = store.store('lobster-a', 'base64-public-key-a');
+  it('stores and retrieves a public key', async () => {
+    const record = await store.store('lobster-a', 'base64-public-key-a');
     expect(record.lobsterId).toBe('lobster-a');
     expect(record.x25519PublicKey).toBe('base64-public-key-a');
     expect(record.updatedAt).toBeGreaterThan(0);
 
-    const retrieved = store.get('lobster-a');
+    const retrieved = await store.get('lobster-a');
     expect(retrieved).toEqual(record);
   });
 
-  it('returns undefined for unknown lobster', () => {
-    expect(store.get('unknown')).toBeUndefined();
+  it('returns undefined for unknown lobster', async () => {
+    expect(await store.get('unknown')).toBeUndefined();
   });
 
-  it('overwrites an existing key', () => {
-    store.store('lobster-a', 'key-v1');
-    const updated = store.store('lobster-a', 'key-v2');
+  it('overwrites an existing key', async () => {
+    await store.store('lobster-a', 'key-v1');
+    const updated = await store.store('lobster-a', 'key-v2');
     expect(updated.x25519PublicKey).toBe('key-v2');
-    expect(store.get('lobster-a')?.x25519PublicKey).toBe('key-v2');
-    expect(store.size()).toBe(1);
+    expect((await store.get('lobster-a'))?.x25519PublicKey).toBe('key-v2');
+    expect(await store.size()).toBe(1);
   });
 
-  it('returns all keys', () => {
-    store.store('a', 'key-a');
-    store.store('b', 'key-b');
-    const all = store.getAll();
+  it('returns all keys', async () => {
+    await store.store('a', 'key-a');
+    await store.store('b', 'key-b');
+    const all = await store.getAll();
     expect(all).toHaveLength(2);
     expect(all.map((r) => r.lobsterId).sort()).toEqual(['a', 'b']);
   });
 
-  it('removes a key', () => {
-    store.store('a', 'key-a');
-    expect(store.remove('a')).toBe(true);
-    expect(store.get('a')).toBeUndefined();
-    expect(store.size()).toBe(0);
+  it('removes a key', async () => {
+    await store.store('a', 'key-a');
+    expect(await store.remove('a')).toBe(true);
+    expect(await store.get('a')).toBeUndefined();
+    expect(await store.size()).toBe(0);
   });
 
-  it('returns false when removing non-existent key', () => {
-    expect(store.remove('unknown')).toBe(false);
+  it('returns false when removing non-existent key', async () => {
+    expect(await store.remove('unknown')).toBe(false);
   });
 
-  it('reports correct size', () => {
-    expect(store.size()).toBe(0);
-    store.store('a', 'key-a');
-    expect(store.size()).toBe(1);
-    store.store('b', 'key-b');
-    expect(store.size()).toBe(2);
+  it('reports correct size', async () => {
+    expect(await store.size()).toBe(0);
+    await store.store('a', 'key-a');
+    expect(await store.size()).toBe(1);
+    await store.store('b', 'key-b');
+    expect(await store.size()).toBe(2);
   });
 });
