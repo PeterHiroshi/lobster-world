@@ -1,5 +1,5 @@
 import type { CodeSubmission, CodeSubmissionStatus, CodeReviewComment } from '@lobster-world/protocol';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { Database } from '../connection.js';
 import { codeSubmissions } from '../schema.js';
 
@@ -138,7 +138,7 @@ export class PgCodeReviewRepo implements CodeReviewRepository {
   }
 
   async count(): Promise<number> {
-    const rows = await this.db.select().from(codeSubmissions);
-    return rows.length;
+    const [result] = await this.db.select({ count: sql<number>`count(*)` }).from(codeSubmissions);
+    return Number(result.count);
   }
 }

@@ -1,5 +1,5 @@
 import type { AuditEvent, AuditEventType } from '@lobster-world/protocol';
-import { desc } from 'drizzle-orm';
+import { desc, sql } from 'drizzle-orm';
 import type { Database } from '../connection.js';
 import { auditLog } from '../schema.js';
 import { AUDIT_RING_BUFFER_SIZE } from '../../config.js';
@@ -91,7 +91,7 @@ export class PgAuditRepo implements AuditRepository {
   }
 
   async size(): Promise<number> {
-    const rows = await this.db.select().from(auditLog);
-    return rows.length;
+    const [result] = await this.db.select({ count: sql<number>`count(*)` }).from(auditLog);
+    return Number(result.count);
   }
 }

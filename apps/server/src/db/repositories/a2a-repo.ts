@@ -1,5 +1,5 @@
 import type { A2AMessage, A2AMessageType } from '@lobster-world/protocol';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { Database } from '../connection.js';
 import { a2aMessages } from '../schema.js';
 
@@ -167,20 +167,19 @@ export class PgA2ARepo implements A2ARepository {
   }
 
   async deleteExpired(nowMs: number, defaultTtlS: number): Promise<number> {
-    const rows = await this.db.select().from(a2aMessages);
-    let removed = 0;
-    for (const row of rows) {
-      const ttlMs = (row.ttl ?? defaultTtlS) * 1000;
-      if (nowMs - row.timestamp >= ttlMs) {
-        await this.db.delete(a2aMessages).where(eq(a2aMessages.id, row.id));
-        removed++;
-      }
-    }
-    return removed;
+    // Use SQL to delete expired messages in a single query
+    // Messages are expired when: nowMs - timestamp >= COALESCE(ttl, defaultTtlS) * 1000
+    const result = await this.db
+      .delete(a2aMessages)
+      .where(
+        sql`${nowMs} - ${a2aMessages.timestamp} >= COALESCE(${a2aMessages.ttl}, ${defaultTtlS}) * 1000`,
+      )
+      .returning();
+    return result.length;
   }
 
   async count(): Promise<number> {
-    const rows = await this.db.select().from(a2aMessages);
-    return rows.length;
+    const [result] = await this.db.select({ count: sql<number>`count(*)` }).from(a2aMessages);
+    return Number(result.count);
   }
 }

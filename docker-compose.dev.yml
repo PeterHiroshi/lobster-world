@@ -1,0 +1,28 @@
+# docker-compose.dev.yml
+# Development-only: runs just the database.
+# Use with: docker compose -f docker-compose.dev.yml up -d
+#
+# Then run the app locally:
+#   DATABASE_URL=postgres://lobster:lobster_dev@localhost:5432/lobster_world pnpm -F @lobster-world/server dev
+# Or just set DATABASE_URL in your .env file.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lobster_world}
+      POSTGRES_USER: ${POSTGRES_USER:-lobster}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lobster_dev}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lobster} -d ${POSTGRES_DB:-lobster_world}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata_dev:
